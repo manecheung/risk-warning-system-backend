@@ -24,7 +24,7 @@ import java.util.stream.Collectors;
  * 包含用户、角色、组织等管理功能。
  */
 @RestController
-@RequestMapping("/api/system")
+@RequestMapping("/system")
 @RequiredArgsConstructor
 public class SystemManagementController {
 

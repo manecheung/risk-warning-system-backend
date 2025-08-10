@@ -18,7 +18,7 @@ import java.util.Map;
  * 产业链风险预警模块控制器
  */
 @RestController
-@RequestMapping("/api/chain-risk")
+@RequestMapping("/chain-risk")
 @RequiredArgsConstructor
 public class ChainRiskController {
 

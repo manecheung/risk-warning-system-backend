@@ -16,7 +16,7 @@ import java.util.Map;
  * 提供首页展示所需的各类数据接口。
  */
 @RestController
-@RequestMapping("/api/dashboard")
+@RequestMapping("/dashboard")
 @RequiredArgsConstructor
 public class DashboardController {
 

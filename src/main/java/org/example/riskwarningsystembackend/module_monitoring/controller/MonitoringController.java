@@ -16,7 +16,7 @@ import java.util.Map;
  * 风险监测模块控制器
  */
 @RestController
-@RequestMapping("/api/monitoring")
+@RequestMapping("/monitoring")
 @RequiredArgsConstructor
 public class MonitoringController {
 

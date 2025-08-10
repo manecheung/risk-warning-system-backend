@@ -17,7 +17,7 @@ import java.util.Map;
  * 供应链管理模块控制器
  */
 @RestController
-@RequestMapping("/api/supply-chain")
+@RequestMapping("/supply-chain")
 @RequiredArgsConstructor
 public class SupplyChainController {
 

@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.RestController;
  * 认证控制器
  */
 @RestController
-@RequestMapping("/api/auth")
+@RequestMapping("/auth")
 @RequiredArgsConstructor
 public class AuthController {
 

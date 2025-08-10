@@ -63,7 +63,7 @@ public class SecurityConfig {
                 // 配置请求授权规则
                 .authorizeHttpRequests(auth -> auth
                         // 允许匿名访问登录接口和所有OPTIONS请求
-                        .requestMatchers("/api/auth/login").permitAll()
+                        .requestMatchers("/auth/login").permitAll()
                         .requestMatchers( "/error").permitAll()
                         // 其他所有请求都需要认证
                         .anyRequest().authenticated()
