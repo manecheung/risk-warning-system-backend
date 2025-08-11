@@ -81,4 +81,19 @@ public class Result<T> {
         result.setMessage(message);
         return result;
     }
+
+    /**
+     * 失败响应（携带错误数据）
+     * @param code    状态码
+     * @param message 错误信息
+     * @param data    错误详情
+     * @return Result<Object>
+     */
+    public static Result<Object> error(Integer code, String message, Object data) {
+        Result<Object> result = new Result<>();
+        result.setCode(code);
+        result.setMessage(message);
+        result.setData(data);
+        return result;
+    }
 }

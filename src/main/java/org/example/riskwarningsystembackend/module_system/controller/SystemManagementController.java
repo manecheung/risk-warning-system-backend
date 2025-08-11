@@ -1,5 +1,6 @@
 package org.example.riskwarningsystembackend.module_system.controller;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.example.riskwarningsystembackend.common.dto.Result;
 import org.example.riskwarningsystembackend.module_system.dto.*;
@@ -64,14 +65,14 @@ public class SystemManagementController {
 
     @PostMapping("/users")
     @PreAuthorize("hasAuthority('system:user:edit')")
-    public ResponseEntity<Result<UserDto>> createUser(@RequestBody UserCreateDto userCreateDto) {
+    public ResponseEntity<Result<UserDto>> createUser(@Valid @RequestBody UserCreateDto userCreateDto) {
         User newUser = systemManagementService.createUser(userCreateDto);
         return new ResponseEntity<>(Result.success(UserDto.fromEntity(newUser), "用户创建成功"), HttpStatus.CREATED);
     }
 
     @PutMapping("/users/{id}")
     @PreAuthorize("hasAuthority('system:user:edit')")
-    public ResponseEntity<Result<UserDto>> updateUser(@PathVariable Long id, @RequestBody UserUpdateDto userUpdateDto) {
+    public ResponseEntity<Result<UserDto>> updateUser(@PathVariable Long id, @Valid @RequestBody UserUpdateDto userUpdateDto) {
         User updatedUser = systemManagementService.updateUser(id, userUpdateDto);
         return ResponseEntity.ok(Result.success(UserDto.fromEntity(updatedUser), "更新成功"));
     }
@@ -95,7 +96,7 @@ public class SystemManagementController {
 
     @PostMapping("/roles")
     @PreAuthorize("hasAuthority('system:role:edit')")
-    public ResponseEntity<Result<RoleDto>> createRole(@RequestBody RoleDto roleDto) {
+    public ResponseEntity<Result<RoleDto>> createRole(@Valid @RequestBody RoleDto roleDto) {
         Role role = new Role();
         role.setName(roleDto.getName());
         role.setDescription(roleDto.getDescription());
@@ -105,7 +106,7 @@ public class SystemManagementController {
 
     @PutMapping("/roles/{id}")
     @PreAuthorize("hasAuthority('system:role:edit')")
-    public ResponseEntity<Result<RoleDto>> updateRole(@PathVariable Long id, @RequestBody RoleDto roleDto) {
+    public ResponseEntity<Result<RoleDto>> updateRole(@PathVariable Long id, @Valid @RequestBody RoleDto roleDto) {
         Role roleDetails = new Role();
         roleDetails.setName(roleDto.getName());
         roleDetails.setDescription(roleDto.getDescription());
@@ -134,6 +135,13 @@ public class SystemManagementController {
         return ResponseEntity.ok(Result.success(null, "权限更新成功"));
     }
 
+    @GetMapping("/permissions/all")
+    @PreAuthorize("hasAuthority('system:role:list')")
+    public ResponseEntity<Result<List<PermissionDto>>> getAllPermissions() {
+        List<PermissionDto> permissionTree = systemManagementService.buildPermissionTree();
+        return ResponseEntity.ok(Result.success(permissionTree));
+    }
+
     // --- 组织管理 ---
     /**
      * 7.3.1 获取组织架构树
@@ -150,7 +158,7 @@ public class SystemManagementController {
      */
     @PostMapping("/organizations")
     @PreAuthorize("hasAuthority('system:org:edit')")
-    public ResponseEntity<Result<OrganizationDto>> createOrganization(@RequestBody OrganizationCreateDto dto) {
+    public ResponseEntity<Result<OrganizationDto>> createOrganization(@Valid @RequestBody OrganizationCreateDto dto) {
         Organization newOrg = systemManagementService.createOrganization(dto);
         return new ResponseEntity<>(Result.success(OrganizationDto.fromEntity(newOrg), "组织创建成功"), HttpStatus.CREATED);
     }
@@ -160,7 +168,7 @@ public class SystemManagementController {
      */
     @PutMapping("/organizations/{id}")
     @PreAuthorize("hasAuthority('system:org:edit')")
-    public ResponseEntity<Result<OrganizationDto>> updateOrganization(@PathVariable Long id, @RequestBody OrganizationUpdateDto dto) {
+    public ResponseEntity<Result<OrganizationDto>> updateOrganization(@PathVariable Long id, @Valid @RequestBody OrganizationUpdateDto dto) {
         Organization updatedOrg = systemManagementService.updateOrganization(id, dto);
         return ResponseEntity.ok(Result.success(OrganizationDto.fromEntity(updatedOrg), "更新成功"));
     }

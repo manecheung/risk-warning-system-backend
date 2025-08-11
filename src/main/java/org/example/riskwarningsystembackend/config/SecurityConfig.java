@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.example.riskwarningsystembackend.security.JwtAuthenticationFilter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.lang.NonNull;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
@@ -15,6 +16,10 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.web.servlet.config.annotation.CorsRegistry;
+import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
+
+import static org.springframework.security.config.Customizer.withDefaults;
 
 /**
  * Spring Security 配置类
@@ -56,6 +61,8 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
+                // 添加CORS配置
+                .cors(withDefaults())
                 // 禁用 CSRF，因为我们使用JWT，是无状态的
                 .csrf(AbstractHttpConfigurer::disable)
                 // 配置会话管理为无状态
@@ -72,5 +79,26 @@ public class SecurityConfig {
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
+    }
+
+    /**
+     * 配置CORS（跨源资源共享）
+     * @return WebMvcConfigurer
+     */
+    @Bean
+    public WebMvcConfigurer corsConfigurer() {
+        return new WebMvcConfigurer() {
+            @Override
+            public void addCorsMappings(@NonNull CorsRegistry registry) {
+                // 允许所有路径的跨域请求
+                registry.addMapping("/**")
+                        // 允许所有来源
+                        .allowedOrigins("*")
+                        // 允许所有HTTP方法
+                        .allowedMethods("*")
+                        // 允许所有请求头
+                        .allowedHeaders("*");
+            }
+        };
     }
 }

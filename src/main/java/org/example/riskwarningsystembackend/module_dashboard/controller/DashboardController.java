@@ -6,6 +6,7 @@ import org.example.riskwarningsystembackend.module_dashboard.service.DashboardSe
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
@@ -58,8 +59,11 @@ public class DashboardController {
      * 3.5 获取最新风险分析列表
      */
     @GetMapping("/risk-analysis")
-    public ResponseEntity<Result<List<Map<String, Object>>>> getRiskAnalysis() {
-        return ResponseEntity.ok(Result.success(dashboardService.getRiskAnalysis()));
+    public ResponseEntity<Result<Map<String, Object>>> getRiskAnalysis(
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "10") int pageSize
+    ) {
+        return ResponseEntity.ok(Result.success(dashboardService.getRiskAnalysis(page, pageSize)));
     }
 
     /**

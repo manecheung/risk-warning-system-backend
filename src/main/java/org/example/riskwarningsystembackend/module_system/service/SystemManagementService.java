@@ -153,7 +153,7 @@ public class SystemManagementService {
      * 该方法会解析权限标识符（如 'system:user:list'）来构建层级关系。
      * @return 权限DTO的树形列表
      */
-    private List<PermissionDto> buildPermissionTree() {
+    public List<PermissionDto> buildPermissionTree() {
         List<Permission> allPermissions = permissionRepository.findAll();
         Map<String, PermissionDto> nodes = new LinkedHashMap<>();
 
@@ -170,10 +170,12 @@ public class SystemManagementService {
                 key = key.substring(0, key.lastIndexOf(':'));
                 if (!nodes.containsKey(key)) {
                     String label = key.substring(key.lastIndexOf(':') + 1);
-                    // 将首字母大写作为父节点的显示名称，例如 "user" -> "User"
-                    label = Character.toUpperCase(label.charAt(0)) + label.substring(1);
-                    // 为父节点创建一个临时的DTO
-                    nodes.put(key, new PermissionDto(key, label, new ArrayList<>()));
+                    if (!label.isEmpty()) {
+                        // 将首字母大写作为父节点的显示名称，例如 "user" -> "User"
+                        label = Character.toUpperCase(label.charAt(0)) + label.substring(1);
+                        // 为父节点创建一个临时的DTO
+                        nodes.put(key, new PermissionDto(key, label, new ArrayList<>()));
+                    }
                 }
             }
         }

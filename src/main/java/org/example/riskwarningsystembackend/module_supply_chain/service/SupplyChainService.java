@@ -53,6 +53,21 @@ public class SupplyChainService {
         company.setLaw(companyDetails.getLaw());
         company.setCredit(companyDetails.getCredit());
         company.setReason(companyDetails.getReason());
+        company.setRegisteredCapital(companyDetails.getRegisteredCapital());
+        company.setPaidInCapital(companyDetails.getPaidInCapital());
+        company.setScale(companyDetails.getScale());
+        company.setEmployeeCount(companyDetails.getEmployeeCount());
+        company.setCertificateCount(companyDetails.getCertificateCount());
+        company.setTaxRating(companyDetails.getTaxRating());
+        company.setPublicSentimentCount(companyDetails.getPublicSentimentCount());
+        company.setLegalCaseCount(companyDetails.getLegalCaseCount());
+        company.setStockIndex(companyDetails.getStockIndex());
+        company.setRevenue(companyDetails.getRevenue());
+        company.setAssets(companyDetails.getAssets());
+        company.setProfit(companyDetails.getProfit());
+        company.setRegisteredAddress(companyDetails.getRegisteredAddress());
+        company.setLongitude(companyDetails.getLongitude());
+        company.setLatitude(companyDetails.getLatitude());
         return companyRepository.save(company);
     }
 
@@ -96,13 +111,17 @@ public class SupplyChainService {
         );
     }
 
-    // --- Helper Methods (Copied from DashboardService for consistency) ---
+    // --- Helper Methods ---
 
     private int getCompanyRiskScore(Company c) {
-        return convertRiskToScore(c.getTech())/10 +
-               convertRiskToScore(c.getFinance())/10 +
-               convertRiskToScore(c.getLaw())/10 +
-               convertRiskToScore(c.getCredit())/10;
+        int score = 0;
+        if (c.getLegalCaseCount() != null) {
+            score += c.getLegalCaseCount() / 100; // 100 cases = 1 risk point
+        }
+        if (c.getPublicSentimentCount() != null) {
+            score += c.getPublicSentimentCount() / 500; // 500 sentiments = 1 risk point
+        }
+        return score;
     }
 
     private String getCompanyRiskLevel(Company c) {
@@ -110,15 +129,5 @@ public class SupplyChainService {
         if (score >= 8) return "高";
         if (score >= 5) return "中";
         return "低";
-    }
-
-    private int convertRiskToScore(String riskLevel) {
-        if (riskLevel == null) return 33; // 默认为低风险
-        return switch (riskLevel.toLowerCase()) {
-            case "高" -> 90;
-            case "中" -> 60;
-            case "低" -> 30;
-            default -> 30;
-        };
     }
 }

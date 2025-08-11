@@ -1,12 +1,9 @@
 package org.example.riskwarningsystembackend.config;
 
 import lombok.RequiredArgsConstructor;
-import org.example.riskwarningsystembackend.module_chain_risk.entity.CompanyRelationship;
-import org.example.riskwarningsystembackend.module_chain_risk.repository.CompanyRelationshipRepository;
 import org.example.riskwarningsystembackend.module_monitoring.entity.Article;
 import org.example.riskwarningsystembackend.module_monitoring.repository.ArticleRepository;
-import org.example.riskwarningsystembackend.module_supply_chain.entity.Company;
-import org.example.riskwarningsystembackend.module_supply_chain.repository.CompanyRepository;
+import org.example.riskwarningsystembackend.module_supply_chain.service.DataImportService;
 import org.example.riskwarningsystembackend.module_system.entity.Organization;
 import org.example.riskwarningsystembackend.module_system.entity.Permission;
 import org.example.riskwarningsystembackend.module_system.entity.Role;
@@ -30,10 +27,9 @@ public class DataInitializer implements CommandLineRunner {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final ArticleRepository articleRepository;
-    private final CompanyRepository companyRepository;
-    private final CompanyRelationshipRepository relationshipRepository;
     private final PermissionRepository permissionRepository;
     private final OrganizationRepository organizationRepository;
+    private final DataImportService dataImportService;
 
     @Override
     public void run(String... args) throws Exception {
@@ -68,8 +64,8 @@ public class DataInitializer implements CommandLineRunner {
         // 5. 创建测试资讯数据
         createArticlesIfNotFound();
 
-        // 6. 创建供应链与图谱数据
-        createCompaniesAndRelationships();
+        // 6. 导入真实数据
+        dataImportService.importData();
     }
 
     private Permission createPermissionIfNotFound(String name, String key) {
@@ -119,47 +115,7 @@ public class DataInitializer implements CommandLineRunner {
         });
     }
 
-    private void createCompaniesAndRelationships() {
-        if (companyRepository.count() == 0) {
-            Company c1 = createCompany("哈尔滨电气集团有限公司", "制造-装备产业", "低", "高", "中", "低", "营收数据缺失", 126.63, 45.75);
-            Company c2 = createCompany("东方电气集团东方电机有限公司", "制造-装备产业", "低", "低", "中", "中", "注册资本变更", 104.06, 30.65);
-            Company c3 = createCompany("新疆金风科技股份有限公司", "新能源产业", "高", "中", "高", "中", "涉及多起法律诉讼", 87.61, 43.79);
-            Company c4 = createCompany("明阳智慧能源集团股份公司", "新能源产业", "中", "中", "低", "低", "研发投入占比下降", 113.38, 23.13);
-            Company c5 = createCompany("特变电工股份有限公司", "新能源产业", "高", "高", "中", "中", "短期偿债压力较大", 87.58, 43.82);
-            Company c6 = createCompany("宁德时代新能源科技股份有限公司", "新能源产业", "高", "低", "低", "低", "无明显风险", 119.3, 26.08);
-            Company c7 = createCompany("比亚迪股份有限公司", "新能源产业", "高", "中", "低", "中", "资产负债率偏高", 114.05, 22.52);
-
-            createRelationship(c2, c1, "供应", "supplier");
-            createRelationship(c3, c1, "供应", "supplier");
-            createRelationship(c1, c4, "销售", "customer");
-            createRelationship(c1, c5, "合作", "partner");
-            createRelationship(c6, c7, "供应", "supplier");
-            createRelationship(c4, c7, "合作", "partner");
-        }
-    }
-
-    private Company createCompany(String name, String industry, String tech, String finance, String law, String credit, String reason, Double longitude, Double latitude) {
-        Company company = new Company();
-        company.setName(name);
-        company.setIndustry(industry);
-        company.setTech(tech);
-        company.setFinance(finance);
-        company.setLaw(law);
-        company.setCredit(credit);
-        company.setReason(reason);
-        company.setLongitude(longitude);
-        company.setLatitude(latitude);
-        return companyRepository.save(company);
-    }
-
-    private void createRelationship(Company source, Company target, String label, String type) {
-        CompanyRelationship rel = new CompanyRelationship();
-        rel.setSource(source);
-        rel.setTarget(target);
-        rel.setLabel(label);
-        rel.setType(type);
-        relationshipRepository.save(rel);
-    }
+    
 
     private void createArticlesIfNotFound() {
         if (articleRepository.count() == 0) {

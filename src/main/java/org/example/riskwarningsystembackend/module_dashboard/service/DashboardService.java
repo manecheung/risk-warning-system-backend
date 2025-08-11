@@ -3,6 +3,7 @@ package org.example.riskwarningsystembackend.module_dashboard.service;
 import lombok.RequiredArgsConstructor;
 import org.example.riskwarningsystembackend.module_supply_chain.entity.Company;
 import org.example.riskwarningsystembackend.module_supply_chain.repository.CompanyRepository;
+import org.example.riskwarningsystembackend.module_supply_chain.repository.ProductRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -18,15 +19,16 @@ import java.util.stream.Collectors;
 public class DashboardService {
 
     private final CompanyRepository companyRepository;
+    private final ProductRepository productRepository;
 
     public List<Map<String, Object>> getKeyMetrics() {
         long industryCount = companyRepository.countDistinctIndustry();
         long companyCount = companyRepository.count();
-        long productCount = 12833L; // Mock - 产品数据不在当前模型中
+        long productCount = productRepository.count();
         return List.of(
-                Map.of("title", "涵盖行业数", "value", industryCount),
-                Map.of("title", "涵盖企业数", "value", companyCount),
-                Map.of("title", "涵盖产品数", "value", productCount)
+                Map.of("title", "涵盖行业数", "value", industryCount, "icon", "M3 18v-6a9 9 0 0 1 18 0v6"),
+                Map.of("title", "涵盖企业数", "value", companyCount, "icon", "M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"),
+                Map.of("title", "涵盖产品数", "value", productCount, "icon", "M6.34 7.34 4.93 8.75 4 12l4-4-1.07-3.07-1.59 2.41z")
         );
     }
 
@@ -36,13 +38,11 @@ public class DashboardService {
         long lowRiskCount = 0;
         List<Company> companies = companyRepository.findAll();
         for (Company c : companies) {
-            int riskScore = getCompanyRiskScore(c);
-            if (riskScore >= 8) { // 定义高风险阈值
-                highRiskCount++;
-            } else if (riskScore >= 5) { // 定义中风险阈值
-                mediumRiskCount++;
-            } else {
-                lowRiskCount++;
+            String riskLevel = getCompanyRiskLevel(c);
+            switch (riskLevel) {
+                case "高" -> highRiskCount++;
+                case "中" -> mediumRiskCount++;
+                default -> lowRiskCount++;
             }
         }
         return List.of(
@@ -84,7 +84,7 @@ public class DashboardService {
                 Map.of("name", "法律风险", "max", 100),
                 Map.of("name", "财务风险", "max", 100),
                 Map.of("name", "产业链风险", "max", 100), // 模拟数据
-                Map.of("name", "舆情风险", "max", 100)  // 模拟数据
+                Map.of("name", "舆情风险", "max", 100)
         );
 
         // 按行业分组计算各维度平均分
@@ -95,13 +95,13 @@ public class DashboardService {
 
         List<Map<String, Object>> riskData = new ArrayList<>();
         companiesByIndustry.forEach((industry, companyList) -> {
-            double avgTech = companyList.stream().mapToInt(c -> convertRiskToScore(c.getTech())).average().orElse(0);
-            double avgCredit = companyList.stream().mapToInt(c -> convertRiskToScore(c.getCredit())).average().orElse(0);
-            double avgLaw = companyList.stream().mapToInt(c -> convertRiskToScore(c.getLaw())).average().orElse(0);
-            double avgFinance = companyList.stream().mapToInt(c -> convertRiskToScore(c.getFinance())).average().orElse(0);
+            double avgTech = companyList.stream().mapToInt(c -> getRiskScoreDimension(c.getTech())).average().orElse(0);
+            double avgCredit = companyList.stream().mapToInt(c -> getRiskScoreDimension(c.getCredit())).average().orElse(0);
+            double avgLaw = companyList.stream().mapToInt(c -> c.getLegalCaseCount() != null ? c.getLegalCaseCount() : 0).average().orElse(0);
+            double avgFinance = companyList.stream().mapToDouble(c -> c.getRevenue() != null ? c.getRevenue() : 0).average().orElse(0);
             // 模拟产业链和舆情风险
             double chainRisk = (avgTech + avgCredit + avgLaw + avgFinance) / 4;
-            double sentimentRisk = new Random().nextInt(40) + 40; // 40-80的随机数
+            double sentimentRisk = companyList.stream().mapToInt(c -> c.getPublicSentimentCount() != null ? c.getPublicSentimentCount() : 0).average().orElse(0);
 
             List<Double> values = List.of(avgTech, avgCredit, avgLaw, avgFinance, chainRisk, sentimentRisk);
             riskData.add(Map.of("value", values, "name", industry));
@@ -110,24 +110,44 @@ public class DashboardService {
         return Map.of("indicator", indicator, "data", riskData);
     }
 
-    public List<Map<String, Object>> getRiskAnalysis() {
-        return companyRepository.findAll().stream()
+    public Map<String, Object> getRiskAnalysis(int page, int pageSize) {
+        // 首先，获取并排序所有记录
+        List<Map<String, Object>> allRecords = companyRepository.findAll().stream()
                 .sorted(Comparator.comparingInt(this::getCompanyRiskScore).reversed())
-                .limit(10)
                 .map(c -> {
                     Map<String, Object> record = new java.util.HashMap<>();
                     record.put("name", c.getName());
-                    int score = getCompanyRiskScore(c);
-                    String level;
+                    String level = getCompanyRiskLevel(c);
                     String levelClass;
-                    if (score >= 8) { level = "高"; levelClass = "risk-high"; }
-                    else if (score >= 5) { level = "中"; levelClass = "risk-medium"; }
-                    else { level = "低"; levelClass = "risk-low"; }
+                    if (level.equals("高")) { levelClass = "risk-high"; }
+                    else if (level.equals("中")) { levelClass = "risk-medium"; }
+                    else { levelClass = "risk-low"; }
                     record.put("level", level);
                     record.put("levelClass", levelClass);
                     record.put("reason", c.getReason());
                     return record;
                 }).collect(Collectors.toList());
+
+        // 手动进行分页
+        int totalRecords = allRecords.size();
+        int totalPages = (int) Math.ceil((double) totalRecords / pageSize);
+        int fromIndex = (page - 1) * pageSize;
+        int toIndex = Math.min(fromIndex + pageSize, totalRecords);
+
+        // 防止索引越界
+        List<Map<String, Object>> pageRecords = fromIndex >= totalRecords ? Collections.emptyList() : allRecords.subList(fromIndex, toIndex);
+
+        // 构建符合API文档的响应结构
+        Map<String, Object> response = new HashMap<>();
+        response.put("page", page);
+        response.put("pageSize", pageSize);
+        response.put("totalRecords", totalRecords);
+        response.put("totalPages", totalPages);
+        response.put("hasPrevPage", page > 1);
+        response.put("hasNextPage", page < totalPages);
+        response.put("records", pageRecords);
+
+        return response;
     }
 
     public List<Map<String, Object>> getRiskMap() {
@@ -143,10 +163,14 @@ public class DashboardService {
     // --- Helper Methods ---
 
     private int getCompanyRiskScore(Company c) {
-        return convertRiskToScore(c.getTech())/10 +
-               convertRiskToScore(c.getFinance())/10 +
-               convertRiskToScore(c.getLaw())/10 +
-               convertRiskToScore(c.getCredit())/10;
+        int score = 0;
+        if (c.getLegalCaseCount() != null) {
+            score += c.getLegalCaseCount() / 100; // 100 cases = 1 risk point
+        }
+        if (c.getPublicSentimentCount() != null) {
+            score += c.getPublicSentimentCount() / 500; // 500 sentiments = 1 risk point
+        }
+        return score;
     }
 
     private double getCompanyHealthScore(Company c) {
@@ -161,7 +185,7 @@ public class DashboardService {
         return "低";
     }
 
-    private int convertRiskToScore(String riskLevel) {
+    private int getRiskScoreDimension(String riskLevel) {
         if (riskLevel == null) return 33; // 默认为低风险
         return switch (riskLevel.toLowerCase()) {
             case "高" -> 90;
