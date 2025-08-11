@@ -7,7 +7,6 @@ import org.springframework.stereotype.Service;
 
 import java.util.Arrays;
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -31,7 +30,7 @@ public class MonitoringService {
         List<ArticleDetailDto> filteredArticles = allArticles.stream()
                 .filter(article -> (type == null || type.isEmpty() || article.getType().equalsIgnoreCase(type)))
                 .filter(article -> (keyword == null || keyword.isEmpty() || article.getTitle().contains(keyword) || article.getTags().contains(keyword)))
-                .collect(Collectors.toList());
+                .toList();
 
         List<ArticleRecordDto> records = filteredArticles.stream()
                 .map(this::convertToRecordDto)
