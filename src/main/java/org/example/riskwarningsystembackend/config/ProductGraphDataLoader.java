@@ -51,7 +51,7 @@ public class ProductGraphDataLoader implements CommandLineRunner {
     private void loadProductGraphData() {
         List<ProductInfo> allProductInfos = productInfoRepository.findAll();
 
-        // Step 1: Collect all unique product names and their highest level (smallest level number)
+        // 第 1 步：收集所有唯一的产品名称及其最高层级（最小的层级编号）。
         Map<String, Integer> productLevels = new HashMap<>();
         for (ProductInfo productInfo : allProductInfos) {
             updateNodeLevel(productLevels, productInfo.getLevel1(), 1);
@@ -67,11 +67,11 @@ public class ProductGraphDataLoader implements CommandLineRunner {
         productNodeRepository.saveAll(nodesToCreate);
         logger.info("产品节点表 (product_nodes) 创建并加载了 {} 条记录.", nodesToCreate.size());
 
-        // Step 2: Create a map for quick lookup of product names to IDs
+        // 第 2 步：创建一个映射，以便根据产品名称快速查找对应的 ID。
         Map<String, Long> nameToIdMap = productNodeRepository.findAll().stream()
                 .collect(Collectors.toMap(ProductNode::getName, ProductNode::getId));
 
-        // Step 3: Create all edges (parent-child relationships)
+        // 第 3 步：创建所有边（即父子关系）。
         Set<ProductEdge> edgesToCreate = new HashSet<>();
         for (ProductInfo productInfo : allProductInfos) {
             addEdge(edgesToCreate, nameToIdMap, productInfo.getLevel1(), productInfo.getLevel2());

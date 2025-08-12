@@ -64,10 +64,10 @@ public class CompanyRelationDataLoader implements CommandLineRunner {
             }
         }
 
-        // Use a Map to enforce uniqueness and precedence (Competition > Cooperation)
+        // 使用 Map 来确保唯一性并体现优先级（竞争 > 合作）。
         Map<String, CompanyRelation> finalRelations = new HashMap<>();
 
-        // Step 2: Infer "Cooperation" relationships (lower precedence)
+        // 步骤 2：推断“合作”关系（较低优先级）
         List<ProductEdge> productEdges = productEdgeRepository.findAll();
         Map<Long, ProductNode> idToNodeMap = productNodeRepository.findAll().stream()
                 .collect(Collectors.toMap(ProductNode::getId, Function.identity()));
@@ -84,9 +84,9 @@ public class CompanyRelationDataLoader implements CommandLineRunner {
                     for (CompanyInfo childCompany : childCompanies) {
                         for (CompanyInfo parentCompany : parentCompanies) {
                             if (!childCompany.getId().equals(parentCompany.getId())) {
-                                // The relation context is the child product (the item being supplied)
+                                // 该关系上下文指的是子产品（即被供应的货品）。
                                 CompanyRelation relation = new CompanyRelation(childCompany.getId(), parentCompany.getId(), childNode.getName(), "合作");
-                                // Use a consistent key. The constructor already sorts the IDs.
+                                // 使用一致的键，构造函数已经会对 ID 进行排序。
                                 String key = relation.getCompanyOneId() + "-" + relation.getCompanyTwoId() + "-" + relation.getSharedProductName();
                                 finalRelations.putIfAbsent(key, relation);
                             }
@@ -97,7 +97,7 @@ public class CompanyRelationDataLoader implements CommandLineRunner {
         }
         logger.info("推断出 {} 条潜在的'合作'关系.", finalRelations.size());
 
-        // Step 3: Infer "Competition" relationships (higher precedence)
+        // 步骤 3：推断“竞争”关系（较高优先级）
         for (Map.Entry<String, List<CompanyInfo>> entry : productToCompanyMap.entrySet()) {
             String sharedProduct = entry.getKey();
             List<CompanyInfo> companies = entry.getValue();
@@ -109,7 +109,7 @@ public class CompanyRelationDataLoader implements CommandLineRunner {
                         CompanyInfo company2 = companies.get(j);
                         CompanyRelation relation = new CompanyRelation(company1.getId(), company2.getId(), sharedProduct, "竞争");
                         String key = relation.getCompanyOneId() + "-" + relation.getCompanyTwoId() + "-" + relation.getSharedProductName();
-                        // Using put() will overwrite any existing cooperation relation with a competition one.
+                        // 使用 put() 方法会把任何已有的合作关系替换为竞争关系。
                         finalRelations.put(key, relation);
                     }
                 }

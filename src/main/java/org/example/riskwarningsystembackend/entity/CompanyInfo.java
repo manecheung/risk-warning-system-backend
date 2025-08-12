@@ -15,7 +15,7 @@ public class CompanyInfo {
     @Column(name = "name", length = 512)
     private String name; // 公司名称
 
-    // Product Info
+    // 产品信息
     @Column(name = "major_product1", length = 512)
     private String majorProduct1; // 主要产品1
 
@@ -28,7 +28,7 @@ public class CompanyInfo {
     @Column(name = "related_products", columnDefinition = "TEXT")
     private String relatedProducts; // 相关产品
 
-    // Basic Classification
+    // 基础分类
     @Column(name = "industry", length = 512)
     private String industry; // 行业
 
@@ -41,7 +41,7 @@ public class CompanyInfo {
     @Column(name = "is_well_known")
     private String isWellKnown; // 是否well known
 
-    // Scale Info
+    // 规模信息
     @Column(name = "company_size")
     private String companySize; // 公司规模
 
@@ -67,7 +67,7 @@ public class CompanyInfo {
     @Column(name = "stock_price_index")
     private String stockPriceIndex; // 股价指数
 
-    // Risk & Rating
+    // 风险与评级
     @Column(name = "qualification_certificate_count")
     private Integer qualificationCertificateCount; // 资质证件数量
 
@@ -80,7 +80,7 @@ public class CompanyInfo {
     @Column(name = "legal_dispute_count")
     private Integer legalDisputeCount;// 法务纠纷数量
 
-    // Location
+    // 位置
     @Column(name = "registered_address", length = 512)
     private String registeredAddress;// 注册地址
 

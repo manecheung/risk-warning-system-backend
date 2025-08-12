@@ -42,7 +42,7 @@ public class InitialDataLoader implements CommandLineRunner {
     private void loadCompanyData() throws IOException, CsvValidationException {
         try (CSVReader reader = new CSVReader(new InputStreamReader(
                 new ClassPathResource("data/风电行业公司基础信息v1.6.csv").getInputStream(), StandardCharsets.UTF_8))) {
-            reader.readNext(); // Skip header
+            reader.readNext(); // 跳过标题行
             String[] line;
             while ((line = reader.readNext()) != null) {
                 CompanyInfo company = new CompanyInfo();
@@ -78,7 +78,7 @@ public class InitialDataLoader implements CommandLineRunner {
     private void loadProductData() throws IOException, CsvValidationException {
         try (CSVReader reader = new CSVReader(new InputStreamReader(
                 new ClassPathResource("data/风电产品基本信息表v1.6.csv").getInputStream(), StandardCharsets.UTF_8))) {
-            reader.readNext(); // Skip header
+            reader.readNext(); // 跳过标题行
             String[] line;
             while ((line = reader.readNext()) != null) {
                 ProductInfo product = new ProductInfo();

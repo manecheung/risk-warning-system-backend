@@ -10,9 +10,8 @@ import java.util.Objects;
 @Data
 @NoArgsConstructor
 @Table(name = "company_relations", uniqueConstraints = {
-    // A relationship is unique based on the pair of companies, the product context, and the relation type
-    @UniqueConstraint(columnNames = {"company_one_id", "company_two_id", "shared_product_name", "relation_type"})
-})
+        // 一条关系是否唯一，取决于公司配对、产品上下文以及关系类型这三者的组合。
+        @UniqueConstraint(columnNames = {"company_one_id", "company_two_id", "shared_product_name", "relation_type"})})
 public class CompanyRelation {
 
     @Id
@@ -32,7 +31,7 @@ public class CompanyRelation {
     private String relationType; // 关联类型
 
     public CompanyRelation(Long companyOneId, Long companyTwoId, String sharedProductName, String relationType) {
-        // Ensure companyOneId is always less than companyTwoId to avoid duplicate relations (A,B) vs (B,A)
+        // 确保 companyOneId 始终小于 companyTwoId，以避免出现 (A,B) 与 (B,A) 这样的重复关系。
         if (companyOneId < companyTwoId) {
             this.companyOneId = companyOneId;
             this.companyTwoId = companyTwoId;
@@ -49,10 +48,7 @@ public class CompanyRelation {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         CompanyRelation that = (CompanyRelation) o;
-        return Objects.equals(companyOneId, that.companyOneId) &&
-               Objects.equals(companyTwoId, that.companyTwoId) &&
-               Objects.equals(sharedProductName, that.sharedProductName) &&
-               Objects.equals(relationType, that.relationType);
+        return Objects.equals(companyOneId, that.companyOneId) && Objects.equals(companyTwoId, that.companyTwoId) && Objects.equals(sharedProductName, that.sharedProductName) && Objects.equals(relationType, that.relationType);
     }
 
     @Override

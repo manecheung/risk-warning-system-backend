@@ -13,19 +13,21 @@ public interface CompanyInfoRepository extends JpaRepository<CompanyInfo, Long> 
     @Query("SELECT COUNT(DISTINCT c.industry) FROM CompanyInfo c WHERE c.industry IS NOT NULL AND c.industry <> ''")
     long countDistinctIndustry();
 
-    // For Risk Distribution
+    // 用于风险分布
     long countByLegalDisputeCountGreaterThanEqual(int count);
+
     long countByLegalDisputeCountBetween(int start, int end);
+
     long countByLegalDisputeCountLessThanEqual(int count);
 
-    // For Industry Health
-        @Query(value = "SELECT industry FROM company_info WHERE industry IS NOT NULL AND industry <> '' GROUP BY industry ORDER BY COUNT(id) DESC LIMIT 10", nativeQuery = true)
+    // 用于行业健康状况
+    @Query(value = "SELECT industry FROM company_info WHERE industry IS NOT NULL AND industry <> '' GROUP BY industry ORDER BY COUNT(id) DESC LIMIT 10", nativeQuery = true)
     List<String> findTop10IndustriesByCompanyCount();
 
     @Query("SELECT AVG(c.legalDisputeCount) FROM CompanyInfo c WHERE c.industry = :industry")
     Double findAverageLegalDisputesByIndustry(@Param("industry") String industry);
 
-    // For Supply Chain Risk
+    // 用于供应链风险
     @Query("SELECT AVG(c.publicOpinionCount) FROM CompanyInfo c WHERE c.industry LIKE %:industry%")
     Double findAveragePublicOpinionByIndustry(@Param("industry") String industry);
 
@@ -35,15 +37,15 @@ public interface CompanyInfoRepository extends JpaRepository<CompanyInfo, Long> 
     @Query("SELECT count(c) FROM CompanyInfo c WHERE c.industry LIKE %:industry%")
     long countByIndustry(@Param("industry") String industry);
 
-    // For Risk Analysis
+    // 用于风险分析
     @Query("SELECT c FROM CompanyInfo c WHERE c.legalDisputeCount > 100 OR c.revenue = '0' OR c.profit = '0' OR c.revenue IS NULL OR c.profit IS NULL")
     Page<CompanyInfo> findHighRiskCompanies(Pageable pageable);
 
-    // For Risk Map
+    // 用于风险地图
     @Query("SELECT c FROM CompanyInfo c WHERE c.latitude IS NOT NULL AND c.longitude IS NOT NULL")
     List<CompanyInfo> findAllWithCoordinates();
 
-    // For Supply Chain Search
+    // 用于供应链搜索
     Page<CompanyInfo> findByNameContainingIgnoreCaseOrIndustryContainingIgnoreCase(String name, String industry, Pageable pageable);
 }
 
