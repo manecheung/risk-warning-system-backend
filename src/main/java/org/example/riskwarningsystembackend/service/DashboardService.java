@@ -1,6 +1,5 @@
 package org.example.riskwarningsystembackend.service;
 
-import org.example.riskwarningsystembackend.entity.CompanyInfo;
 import org.example.riskwarningsystembackend.dto.*;
 import org.example.riskwarningsystembackend.repository.CompanyInfoRepository;
 import org.example.riskwarningsystembackend.repository.ProductInfoRepository;
