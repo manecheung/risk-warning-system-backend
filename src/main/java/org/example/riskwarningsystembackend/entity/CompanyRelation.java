@@ -11,7 +11,7 @@ import java.util.Objects;
 @NoArgsConstructor
 @Table(name = "company_relations", uniqueConstraints = {
         // 一条关系是否唯一，取决于公司配对、产品上下文以及关系类型这三者的组合。
-        @UniqueConstraint(columnNames = {"company_one_id", "company_two_id", "shared_product_name", "relation_type"})})
+        @UniqueConstraint(columnNames = {"company_one_id", "company_two_id", "shared_product_name", "relation_name", "relation_type"})})
 public class CompanyRelation {
 
     @Id
