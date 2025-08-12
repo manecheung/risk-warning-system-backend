@@ -157,7 +157,8 @@ public class DashboardService {
                 .map(relation -> new CompanyGraphDTO.Edge(
                         String.valueOf(relation.getCompanyOneId()),
                         String.valueOf(relation.getCompanyTwoId()),
-                        relation.getRelationType() + "(" + relation.getSharedProductName() + ")"
+                        relation.getRelationName() + "(" + relation.getSharedProductName() + ")",
+                        String.valueOf(relation.getRelationType())
                 ))
                 .collect(Collectors.toList());
 

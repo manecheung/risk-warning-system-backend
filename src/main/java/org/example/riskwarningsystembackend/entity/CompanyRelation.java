@@ -27,10 +27,13 @@ public class CompanyRelation {
     @Column(name = "shared_product_name", nullable = false)
     private String sharedProductName; // 共享的产品名称
 
+    @Column(name = "relation_name", nullable = false)
+    private String relationName; // 关联类型名称
+
     @Column(name = "relation_type", nullable = false)
     private String relationType; // 关联类型
 
-    public CompanyRelation(Long companyOneId, Long companyTwoId, String sharedProductName, String relationType) {
+    public CompanyRelation(Long companyOneId, Long companyTwoId, String sharedProductName, String relationName, String relationType) {
         // 确保 companyOneId 始终小于 companyTwoId，以避免出现 (A,B) 与 (B,A) 这样的重复关系。
         if (companyOneId < companyTwoId) {
             this.companyOneId = companyOneId;
@@ -40,6 +43,7 @@ public class CompanyRelation {
             this.companyTwoId = companyOneId;
         }
         this.sharedProductName = sharedProductName;
+        this.relationName = relationName;
         this.relationType = relationType;
     }
 

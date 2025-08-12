@@ -25,5 +25,6 @@ public class CompanyGraphDTO {
         private String source; // 边的起点ID
         private String target; // 边的终点ID
         private String label; // 边的标签
+        private String type; // 边的标签类型
     }
 }

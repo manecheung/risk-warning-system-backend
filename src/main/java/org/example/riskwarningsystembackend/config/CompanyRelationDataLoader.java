@@ -85,7 +85,7 @@ public class CompanyRelationDataLoader implements CommandLineRunner {
                         for (CompanyInfo parentCompany : parentCompanies) {
                             if (!childCompany.getId().equals(parentCompany.getId())) {
                                 // 该关系上下文指的是子产品（即被供应的货品）。
-                                CompanyRelation relation = new CompanyRelation(childCompany.getId(), parentCompany.getId(), childNode.getName(), "合作");
+                                CompanyRelation relation = new CompanyRelation(childCompany.getId(), parentCompany.getId(), childNode.getName(), "合作", "partner");
                                 // 使用一致的键，构造函数已经会对 ID 进行排序。
                                 String key = relation.getCompanyOneId() + "-" + relation.getCompanyTwoId() + "-" + relation.getSharedProductName();
                                 finalRelations.putIfAbsent(key, relation);
@@ -107,7 +107,7 @@ public class CompanyRelationDataLoader implements CommandLineRunner {
                     for (int j = i + 1; j < companies.size(); j++) {
                         CompanyInfo company1 = companies.get(i);
                         CompanyInfo company2 = companies.get(j);
-                        CompanyRelation relation = new CompanyRelation(company1.getId(), company2.getId(), sharedProduct, "竞争");
+                        CompanyRelation relation = new CompanyRelation(company1.getId(), company2.getId(), sharedProduct, "竞争", "supplier");
                         String key = relation.getCompanyOneId() + "-" + relation.getCompanyTwoId() + "-" + relation.getSharedProductName();
                         // 使用 put() 方法会把任何已有的合作关系替换为竞争关系。
                         finalRelations.put(key, relation);
@@ -115,7 +115,7 @@ public class CompanyRelationDataLoader implements CommandLineRunner {
                 }
             }
         }
-        
+
         companyRelationRepository.saveAll(finalRelations.values());
         logger.info("公司关系表 (company_relations) 创建并加载了 {} 条总记录.", finalRelations.size());
     }
