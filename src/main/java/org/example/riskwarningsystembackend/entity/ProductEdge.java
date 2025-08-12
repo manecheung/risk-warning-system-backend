@@ -12,13 +12,13 @@ public class ProductEdge {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    private Long id; // 主键
 
     @Column(name = "parent_id", nullable = false)
-    private Long parentId;
+    private Long parentId; // 父节点ID
 
     @Column(name = "child_id", nullable = false)
-    private Long childId;
+    private Long childId; // 子节点ID
 
     public ProductEdge(Long parentId, Long childId) {
         this.parentId = parentId;

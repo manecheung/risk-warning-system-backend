@@ -12,13 +12,13 @@ public class ProductNode {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    private Long id; // 主键ID
 
     @Column(name = "name", nullable = false, unique = true)
-    private String name;
+    private String name; // 产品名称
 
     @Column(name = "level", nullable = false)
-    private int level;
+    private int level; // 产品层级
 
     public ProductNode(String name, int level) {
         this.name = name;

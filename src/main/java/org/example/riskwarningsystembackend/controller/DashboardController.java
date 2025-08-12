@@ -53,4 +53,9 @@ public class DashboardController {
     public RestResult<List<RiskMapDTO>> getRiskMap() {
         return RestResult.success(dashboardService.getRiskMap());
     }
+
+    @GetMapping("/graph")
+    public RestResult<CompanyGraphDTO> getCompanyKnowledgeGraph() {
+        return RestResult.success(dashboardService.getCompanyKnowledgeGraph());
+    }
 }

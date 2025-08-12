@@ -1,29 +1,37 @@
 package org.example.riskwarningsystembackend.service;
 
 import org.example.riskwarningsystembackend.dto.*;
+import org.example.riskwarningsystembackend.entity.CompanyInfo;
+import org.example.riskwarningsystembackend.entity.CompanyRelation;
 import org.example.riskwarningsystembackend.repository.CompanyInfoRepository;
+import org.example.riskwarningsystembackend.repository.CompanyRelationRepository;
 import org.example.riskwarningsystembackend.repository.ProductInfoRepository;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class DashboardService {
 
     private final CompanyInfoRepository companyInfoRepository;
     private final ProductInfoRepository productInfoRepository;
+    private final CompanyRelationRepository companyRelationRepository;
 
-    public DashboardService(CompanyInfoRepository companyInfoRepository, ProductInfoRepository productInfoRepository) {
+    public DashboardService(CompanyInfoRepository companyInfoRepository, 
+                            ProductInfoRepository productInfoRepository, 
+                            CompanyRelationRepository companyRelationRepository) {
         this.companyInfoRepository = companyInfoRepository;
         this.productInfoRepository = productInfoRepository;
+        this.companyRelationRepository = companyRelationRepository;
     }
 
     public List<KeyMetricDTO> getKeyMetrics() {
-        // Using real data counts
         long companyCount = companyInfoRepository.count();
         long productCount = productInfoRepository.count();
         long industryCount = companyInfoRepository.countDistinctIndustry();
@@ -36,24 +44,32 @@ public class DashboardService {
     }
 
     public List<RiskDistributionDTO> getRiskDistribution() {
-        // Mock data as per API doc
+        long highRiskCount = companyInfoRepository.countByLegalDisputeCountGreaterThanEqual(500);
+        long mediumRiskCount = companyInfoRepository.countByLegalDisputeCountBetween(101, 499);
+        long lowRiskCount = companyInfoRepository.countByLegalDisputeCountLessThanEqual(100);
+
         return Arrays.asList(
-                new RiskDistributionDTO(18, "高风险企业"),
-                new RiskDistributionDTO(45, "中风险企业"),
-                new RiskDistributionDTO(120, "低风险企业")
+                new RiskDistributionDTO(highRiskCount, "高风险企业"),
+                new RiskDistributionDTO(mediumRiskCount, "中风险企业"),
+                new RiskDistributionDTO(lowRiskCount, "低风险企业")
         );
     }
 
     public IndustryHealthDTO getIndustryHealth() {
-        // Mock data as per API doc
-        return new IndustryHealthDTO(
-                Arrays.asList("通信设备", "集成电路", "医疗器械", "新能源汽车", "风电产业链", "航空航天", "电子信息产业", "化学原料制品", "高端装备制造", "生物医药", "人工智能", "云计算与大数据", "现代物流", "新材料"),
-                Arrays.asList(10, 40, 15, 20, 70, 25, 60, 30, 55, 65, 80, 75, 45, 50)
-        );
+        List<String> categories = companyInfoRepository.findTop10IndustriesByCompanyCount();
+        List<Integer> values = new ArrayList<>();
+        for (String industry : categories) {
+            Double avgDisputes = companyInfoRepository.findAverageLegalDisputesByIndustry(industry);
+            if (avgDisputes == null) {
+                avgDisputes = 0.0;
+            }
+            int score = (int) Math.max(10, 100 - (avgDisputes / 10));
+            values.add(score);
+        }
+        return new IndustryHealthDTO(categories, values);
     }
 
     public SupplyChainRiskDTO getSupplyChainRisk() {
-        // Mock data as per API doc
         List<SupplyChainRiskDTO.Indicator> indicators = Arrays.asList(
                 new SupplyChainRiskDTO.Indicator("技术风险", 100),
                 new SupplyChainRiskDTO.Indicator("信用风险", 100),
@@ -62,45 +78,89 @@ public class DashboardService {
                 new SupplyChainRiskDTO.Indicator("产业链风险", 100),
                 new SupplyChainRiskDTO.Indicator("舆情风险", 100)
         );
-        List<SupplyChainRiskDTO.ChainData> data = Arrays.asList(
-                new SupplyChainRiskDTO.ChainData(Arrays.asList(85, 90, 60, 75, 95, 70), "风电行业产业链"),
-                new SupplyChainRiskDTO.ChainData(Arrays.asList(70, 65, 80, 60, 80, 88), "集成电路产业链"),
-                new SupplyChainRiskDTO.ChainData(Arrays.asList(50, 75, 70, 85, 60, 80), "新能源产业")
-        );
+
+        String windIndustryName = "制造业 - 电气机械和器材制造业 - 电机制造";
+        Double avgLegal = companyInfoRepository.findAverageLegalDisputesByIndustry(windIndustryName);
+        Double avgPublicOpinion = companyInfoRepository.findAveragePublicOpinionByIndustry(windIndustryName);
+        long financialRiskCompanies = companyInfoRepository.countFinancialRiskCompaniesByIndustry(windIndustryName);
+        long totalCompanies = companyInfoRepository.countByIndustry(windIndustryName);
+
+        int legalRiskScore = (avgLegal == null) ? 80 : Math.max(10, 100 - (int)(avgLegal / 5));
+        int publicOpinionScore = (avgPublicOpinion == null) ? 85 : Math.max(10, 100 - (int)(avgPublicOpinion / 2));
+        int financialRiskScore = (totalCompanies == 0) ? 75 : Math.max(10, 100 - (int)((double)financialRiskCompanies / totalCompanies * 100));
+
+        List<Integer> windPowerValues = Arrays.asList(85, 90, legalRiskScore, financialRiskScore, 95, publicOpinionScore);
+        List<SupplyChainRiskDTO.ChainData> data = List.of(new SupplyChainRiskDTO.ChainData(windPowerValues, "风电行业产业链"));
+
         return new SupplyChainRiskDTO(indicators, data);
     }
 
     public PaginatedResponseDto<RiskAnalysisDto> getRiskAnalysis(PageRequest pageRequest) {
-        // Mock data as per API doc
-        List<RiskAnalysisDto> records = Arrays.asList(
-                new RiskAnalysisDto("哈尔滨电气集团有限公司", "高", "risk-high", "营收数据缺失"),
-                new RiskAnalysisDto("东方电气集团东方电机有限公司", "低", "risk-low", "注册资本变更"),
-                new RiskAnalysisDto("南京汽轮电机(集团)有限责任公司", "中", "risk-medium", "财务数据缺失"),
-                new RiskAnalysisDto("上海电气集团股份有限公司", "低", "risk-low", "法人代表变更"),
-                new RiskAnalysisDto("特变电工股份有限公司", "高", "risk-high", "存在多起法律诉讼"),
-                new RiskAnalysisDto("新疆金风科技股份有限公司", "中", "risk-medium", "主要股东减持股份"),
-                new RiskAnalysisDto("明阳智慧能源集团股份公司", "低", "risk-low", "新增对外投资"),
-                new RiskAnalysisDto("中国长江三峡集团有限公司", "低", "risk-low", "经营范围变更"),
-                new RiskAnalysisDto("中国核工业集团有限公司", "高", "risk-high", "子公司涉及重大安全事故"),
-                new RiskAnalysisDto("国家电力投资集团有限公司", "中", "risk-medium", "海外项目投资收益未达预期")
-        );
+        Page<CompanyInfo> highRiskCompanies = companyInfoRepository.findHighRiskCompanies(pageRequest);
+        Page<RiskAnalysisDto> riskAnalysisDtoPage = highRiskCompanies.map(company -> {
+            String riskLevel;
+            String reason = "";
+            int legalDisputes = company.getLegalDisputeCount() != null ? company.getLegalDisputeCount() : 0;
 
-        int start = (int) pageRequest.getOffset();
-        int end = Math.min((start + pageRequest.getPageSize()), records.size());
-        Page<RiskAnalysisDto> page = new PageImpl<>(records.subList(start, end), pageRequest, records.size());
-        return new PaginatedResponseDto<>(page);
+            if (legalDisputes > 500) {
+                riskLevel = "高";
+                reason = "存在 " + legalDisputes + " 起法律诉讼";
+            } else if (legalDisputes > 100) {
+                riskLevel = "中";
+                reason = "存在 " + legalDisputes + " 起法律诉讼";
+            } else {
+                riskLevel = "低";
+            }
+
+            if ("0".equals(company.getRevenue()) || "0".equals(company.getProfit()) || !StringUtils.hasText(company.getRevenue()) || !StringUtils.hasText(company.getProfit())) {
+                riskLevel = "高";
+                String financialReason = "关键财务数据缺失";
+                reason = reason.isEmpty() ? financialReason : reason + "；" + financialReason;
+            }
+
+            String levelClass = "risk-" + (riskLevel.equals("高") ? "high" : (riskLevel.equals("中") ? "medium" : "low"));
+            return new RiskAnalysisDto(company.getName(), riskLevel, levelClass, reason);
+        });
+        return new PaginatedResponseDto<>(riskAnalysisDtoPage);
     }
 
     public List<RiskMapDTO> getRiskMap() {
-        // Mock data as per API doc
-        return Arrays.asList(
-                new RiskMapDTO("东方电气", Arrays.asList(104.065735, 30.659462, 20), "低"),
-                new RiskMapDTO("新疆金风科技", Arrays.asList(87.617733, 43.792818, 20), "中"),
-                new RiskMapDTO("上海电气", Arrays.asList(121.473701, 31.230416, 20), "低"),
-                new RiskMapDTO("哈尔滨电气", Arrays.asList(126.635446, 45.755053, 20), "高"),
-                new RiskMapDTO("明阳智能", Arrays.asList(113.383331, 23.133333, 20), "中"),
-                new RiskMapDTO("中国中车", Arrays.asList(116.407428, 39.904214, 20), "低"),
-                new RiskMapDTO("特变电工", Arrays.asList(87.584491, 43.825633, 20), "高")
-        );
+        List<CompanyInfo> companies = companyInfoRepository.findAllWithCoordinates();
+        return companies.stream().map(company -> {
+            String riskLevel;
+            int legalDisputes = company.getLegalDisputeCount() != null ? company.getLegalDisputeCount() : 0;
+            if (legalDisputes > 500) {
+                riskLevel = "高";
+            } else if (legalDisputes > 100) {
+                riskLevel = "中";
+            } else {
+                riskLevel = "低";
+            }
+            List<Object> value = Arrays.asList(company.getLongitude(), company.getLatitude(), 20);
+            return new RiskMapDTO(company.getName(), value, riskLevel);
+        }).collect(Collectors.toList());
+    }
+
+    public CompanyGraphDTO getCompanyKnowledgeGraph() {
+        List<CompanyInfo> companies = companyInfoRepository.findAll();
+        List<CompanyRelation> relations = companyRelationRepository.findAll();
+
+        List<CompanyGraphDTO.Node> nodes = companies.stream()
+                .map(company -> new CompanyGraphDTO.Node(
+                        String.valueOf(company.getId()),
+                        company.getName(),
+                        20 // Default size for nodes
+                ))
+                .collect(Collectors.toList());
+
+        List<CompanyGraphDTO.Edge> edges = relations.stream()
+                .map(relation -> new CompanyGraphDTO.Edge(
+                        String.valueOf(relation.getCompanyOneId()),
+                        String.valueOf(relation.getCompanyTwoId()),
+                        relation.getRelationType() + "(" + relation.getSharedProductName() + ")"
+                ))
+                .collect(Collectors.toList());
+
+        return new CompanyGraphDTO(nodes, edges);
     }
 }

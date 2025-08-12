@@ -54,7 +54,7 @@ public class CompanyRelationDataLoader implements CommandLineRunner {
         List<CompanyInfo> allCompanies = companyInfoRepository.findAll();
         Map<String, List<CompanyInfo>> productToCompanyMap = new HashMap<>();
 
-        // Step 1: Build a map from product to list of companies that produce it.
+        // 步骤1 构建产品-公司映射
         for (CompanyInfo company : allCompanies) {
             if (StringUtils.hasText(company.getMajorProduct1())) {
                 productToCompanyMap.computeIfAbsent(company.getMajorProduct1(), k -> new ArrayList<>()).add(company);

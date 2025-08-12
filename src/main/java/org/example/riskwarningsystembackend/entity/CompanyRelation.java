@@ -17,19 +17,19 @@ public class CompanyRelation {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    private Long id; // 主键
 
     @Column(name = "company_one_id", nullable = false)
-    private Long companyOneId;
+    private Long companyOneId; // 公司1的ID
 
     @Column(name = "company_two_id", nullable = false)
-    private Long companyTwoId;
+    private Long companyTwoId; // 公司2的ID
 
     @Column(name = "shared_product_name", nullable = false)
-    private String sharedProductName;
+    private String sharedProductName; // 共享的产品名称
 
     @Column(name = "relation_type", nullable = false)
-    private String relationType;
+    private String relationType; // 关联类型
 
     public CompanyRelation(Long companyOneId, Long companyTwoId, String sharedProductName, String relationType) {
         // Ensure companyOneId is always less than companyTwoId to avoid duplicate relations (A,B) vs (B,A)

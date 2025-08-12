@@ -6,6 +6,6 @@ import lombok.Data;
 @Data
 @AllArgsConstructor
 public class RiskDistributionDTO {
-    private long value;
-    private String name;
+    private long value; // 数量
+    private String name; // 分类名称
 }
