@@ -7,8 +7,6 @@ import org.example.riskwarningsystembackend.dto.SupplyChainSummaryDTO;
 import org.example.riskwarningsystembackend.entity.CompanyInfo;
 import org.example.riskwarningsystembackend.service.SupplyChainService;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
