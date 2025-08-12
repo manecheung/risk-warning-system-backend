@@ -47,5 +47,12 @@ public interface CompanyInfoRepository extends JpaRepository<CompanyInfo, Long> 
 
     // 用于供应链搜索
     Page<CompanyInfo> findByNameContainingIgnoreCaseOrIndustryContainingIgnoreCase(String name, String industry, Pageable pageable);
+
+    /**
+     * 根据公司名称进行模糊查询，用于知识图谱的搜索功能。
+     * @param name 公司名称关键词
+     * @return 匹配的公司信息列表
+     */
+    List<CompanyInfo> findByNameContainingIgnoreCase(String name);
 }
 

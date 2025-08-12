@@ -11,10 +11,9 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Service
 public class DashboardService {
@@ -141,10 +140,107 @@ public class DashboardService {
         }).collect(Collectors.toList());
     }
 
-    public CompanyGraphDTO getCompanyKnowledgeGraph() {
-        List<CompanyInfo> companies = companyInfoRepository.findAll();
-        List<CompanyRelation> relations = companyRelationRepository.findAll();
+    /**
+     * 获取公司知识图谱数据的主入口方法。
+     * 根据传入的参数决定加载方式：
+     * 1. 如果提供了 companyId，则加载该公司的子图（按需展开）。
+     * 2. 如果提供了 keyword，则加载与搜索结果相关的子图。
+     * 3. 如果都没有提供，则加载一个有限的初始图谱。
+     * @param companyId 可选参数，用于按需加载的公司ID。
+     * @param keyword 可选参数，用于搜索的公司名称关键词。
+     * @return 公司知识图谱DTO
+     */
+    public CompanyGraphDTO getCompanyKnowledgeGraph(Long companyId, String keyword) {
+        if (companyId != null) {
+            // 场景一：用户点击节点，按需展开
+            return getSubgraphForCompany(companyId);
+        } else if (StringUtils.hasText(keyword)) {
+            // 场景二：用户使用搜索功能
+            return getGraphBySearch(keyword);
+        } else {
+            // 场景三：页面初始加载
+            return getInitialGraph();
+        }
+    }
 
+    /**
+     * 构建并返回一个规模有限的初始知识图谱。
+     * 这个方法用于首次加载页面时，避免一次性返回所有数据。
+     */
+    private CompanyGraphDTO getInitialGraph() {
+        // 限制初始加载的公司数量为50家，可以根据前端性能调整这个数值
+        PageRequest pageRequest = PageRequest.of(0, 50);
+        Page<CompanyInfo> companyPage = companyInfoRepository.findAll(pageRequest);
+        List<CompanyInfo> companies = companyPage.getContent();
+        if (companies.isEmpty()) {
+            return new CompanyGraphDTO(Collections.emptyList(), Collections.emptyList());
+        }
+
+        Set<Long> companyIds = companies.stream().map(CompanyInfo::getId).collect(Collectors.toSet());
+
+        // 高效地仅查询这部分公司之间的关系
+        List<CompanyRelation> relations = companyRelationRepository.findAllByCompanyIds(companyIds);
+
+        return buildGraphDTO(companies, relations);
+    }
+
+    /**
+     * 根据指定的公司ID，构建并返回其所有直接关联的子图。
+     * 这个方法用于实现点击节点按需展开的功能。
+     */
+    private CompanyGraphDTO getSubgraphForCompany(Long companyId) {
+        // 验证中心节点是否存在
+        if (!companyInfoRepository.existsById(companyId)) {
+            return new CompanyGraphDTO(Collections.emptyList(), Collections.emptyList());
+        }
+
+        // 使用Repository方法，高效地查找所有与该公司相关的关系
+        List<CompanyRelation> relations = companyRelationRepository.findAllByCompanyId(companyId);
+
+        // 从关系中提取所有关联公司的ID
+        Set<Long> relatedCompanyIds = relations.stream()
+                .flatMap(relation -> Stream.of(relation.getCompanyOneId(), relation.getCompanyTwoId()))
+                .collect(Collectors.toSet());
+        // 确保中心公司本身也被包含在内
+        relatedCompanyIds.add(companyId);
+
+        // 一次性从数据库批量查询所有相关公司的信息，以提高效率
+        List<CompanyInfo> companies = companyInfoRepository.findAllById(relatedCompanyIds);
+
+        return buildGraphDTO(companies, relations);
+    }
+
+    /**
+     * 根据搜索关键词，构建并返回相关的子图（搜索结果+一度关系邻居）。
+     */
+    private CompanyGraphDTO getGraphBySearch(String keyword) {
+        // 1. 根据关键词模糊查询匹配的公司
+        List<CompanyInfo> matchedCompanies = companyInfoRepository.findByNameContainingIgnoreCase(keyword);
+        if (matchedCompanies.isEmpty()) {
+            return new CompanyGraphDTO(Collections.emptyList(), Collections.emptyList());
+        }
+        Set<Long> matchedCompanyIds = matchedCompanies.stream().map(CompanyInfo::getId).collect(Collectors.toSet());
+
+        // 2. 高效地找到这些匹配公司的所有一度关联关系
+        List<CompanyRelation> relations = companyRelationRepository.findAllByCompanyIds(matchedCompanyIds);
+
+        // 3. 从关系中提取所有涉及到的公司ID（包括搜索结果本身和它们的邻居）
+        Set<Long> allCompanyIdsInGraph = relations.stream()
+                .flatMap(relation -> Stream.of(relation.getCompanyOneId(), relation.getCompanyTwoId()))
+                .collect(Collectors.toSet());
+        allCompanyIdsInGraph.addAll(matchedCompanyIds); // 确保搜索结果公司也被包含
+
+        // 4. 批量查询所有需要展示的公司信息
+        List<CompanyInfo> allCompanies = companyInfoRepository.findAllById(allCompanyIdsInGraph);
+
+        return buildGraphDTO(allCompanies, relations);
+    }
+
+    /**
+     * 根据公司列表和关系列表构建最终的CompanyGraphDTO对象。
+     * 这是一个辅助方法，用于将实体对象转换为前端需要的DTO格式。
+     */
+    private CompanyGraphDTO buildGraphDTO(List<CompanyInfo> companies, List<CompanyRelation> relations) {
         List<CompanyGraphDTO.Node> nodes = companies.stream()
                 .map(company -> new CompanyGraphDTO.Node(
                         String.valueOf(company.getId()),

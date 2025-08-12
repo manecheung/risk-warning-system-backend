@@ -54,8 +54,16 @@ public class DashboardController {
         return RestResult.success(dashboardService.getRiskMap());
     }
 
+    /**
+     * 获取知识图谱数据的API接口。
+     * @param companyId 可选参数。如果前端在请求时附带此参数，则触发按需加载，返回指定公司的子图。
+     * @param keyword 可选参数。如果前端附带此参数，则触发搜索功能，返回与关键词相关的子图。
+     * @return 经过优化的图谱数据（初始、子图或搜索结果）
+     */
     @GetMapping("/graph")
-    public RestResult<CompanyGraphDTO> getCompanyKnowledgeGraph() {
-        return RestResult.success(dashboardService.getCompanyKnowledgeGraph());
+    public RestResult<CompanyGraphDTO> getCompanyKnowledgeGraph(
+            @RequestParam(required = false) Long companyId,
+            @RequestParam(required = false) String keyword) {
+        return RestResult.success(dashboardService.getCompanyKnowledgeGraph(companyId, keyword));
     }
 }
