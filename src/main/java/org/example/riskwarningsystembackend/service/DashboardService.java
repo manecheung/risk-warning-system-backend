@@ -5,7 +5,7 @@ import org.example.riskwarningsystembackend.entity.CompanyInfo;
 import org.example.riskwarningsystembackend.entity.CompanyRelation;
 import org.example.riskwarningsystembackend.repository.CompanyInfoRepository;
 import org.example.riskwarningsystembackend.repository.CompanyRelationRepository;
-import org.example.riskwarningsystembackend.repository.ProductInfoRepository;
+import org.example.riskwarningsystembackend.repository.ProductNodeRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
@@ -20,20 +20,20 @@ import java.util.stream.Collectors;
 public class DashboardService {
 
     private final CompanyInfoRepository companyInfoRepository;
-    private final ProductInfoRepository productInfoRepository;
+    private final ProductNodeRepository productNodeRepository;
     private final CompanyRelationRepository companyRelationRepository;
 
-    public DashboardService(CompanyInfoRepository companyInfoRepository, 
-                            ProductInfoRepository productInfoRepository, 
+    public DashboardService(CompanyInfoRepository companyInfoRepository,
+                            ProductNodeRepository productNodeRepository,
                             CompanyRelationRepository companyRelationRepository) {
         this.companyInfoRepository = companyInfoRepository;
-        this.productInfoRepository = productInfoRepository;
+        this.productNodeRepository = productNodeRepository;
         this.companyRelationRepository = companyRelationRepository;
     }
 
     public List<KeyMetricDTO> getKeyMetrics() {
         long companyCount = companyInfoRepository.count();
-        long productCount = productInfoRepository.count();
+        long productCount = productNodeRepository.count();
         long industryCount = companyInfoRepository.countDistinctIndustry();
 
         return Arrays.asList(
@@ -149,7 +149,7 @@ public class DashboardService {
                 .map(company -> new CompanyGraphDTO.Node(
                         String.valueOf(company.getId()),
                         company.getName(),
-                        20 // Default size for nodes
+                        20 // 节点的默认大小
                 ))
                 .collect(Collectors.toList());
 

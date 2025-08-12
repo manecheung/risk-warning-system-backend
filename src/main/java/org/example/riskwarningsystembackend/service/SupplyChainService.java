@@ -47,7 +47,7 @@ public class SupplyChainService {
     }
 
     public CompanyInfo createCompany(CompanyInfo companyInfo) {
-        // In a real app, we might want to use a DTO and map fields, but for now this is fine.
+        // 在实际应用中，我们可能希望使用 DTO 并进行字段映射，但目前这样处理即可。
         return companyInfoRepository.save(companyInfo);
     }
 
@@ -55,10 +55,10 @@ public class SupplyChainService {
         return companyInfoRepository.findById(id).map(company -> {
             company.setName(companyDetails.getName());
             company.setIndustry(companyDetails.getIndustry());
-            // Note: In a real application, risk levels (tech, finance, etc.) and reasons
-            // should be recalculated based on new data, not set directly.
-            // For this implementation, we assume the provided details are what's intended to be saved.
-            // We will only map the basic, non-derived fields.
+            // 注意：在实际应用中，风险等级（技术、财务等）及原因
+            // 应基于新数据重新计算，而非直接设置。
+            // 在本实现中，我们假设所提供的信息即为需要保存的内容。
+            // 我们仅映射基本的、非衍生的字段。
             company.setMajorProduct1(companyDetails.getMajorProduct1());
             company.setMajorProduct2(companyDetails.getMajorProduct2());
             company.setRegisteredAddress(companyDetails.getRegisteredAddress());
@@ -74,7 +74,7 @@ public class SupplyChainService {
         String lawRisk = getLawRisk(company);
         String financeRisk = getFinanceRisk(company);
         String creditRisk = getCreditRisk(company);
-        String techRisk = "低"; // Placeholder as no direct data is available
+        String techRisk = "低"; // 占位符，因无直接数据可用
 
         List<String> reasons = new ArrayList<>();
         if ("高".equals(lawRisk) || "中".equals(lawRisk)) {
@@ -115,6 +115,6 @@ public class SupplyChainService {
     }
 
     private String getCreditRisk(CompanyInfo company) {
-        return "A".equals(company.getTaxRating()) ? "低" : "中"; // Assuming non-A is medium risk
+        return "A".equals(company.getTaxRating()) ? "低" : "中"; // 假设非A为中等风险。
     }
 }
