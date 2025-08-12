@@ -79,7 +79,7 @@ public class DashboardService {
                 new SupplyChainRiskDTO.Indicator("舆情风险", 100)
         );
 
-        String windIndustryName = "制造业 - 电气机械和器材制造业 - 电机制造";
+        String windIndustryName = "";
         Double avgLegal = companyInfoRepository.findAverageLegalDisputesByIndustry(windIndustryName);
         Double avgPublicOpinion = companyInfoRepository.findAveragePublicOpinionByIndustry(windIndustryName);
         long financialRiskCompanies = companyInfoRepository.countFinancialRiskCompaniesByIndustry(windIndustryName);
