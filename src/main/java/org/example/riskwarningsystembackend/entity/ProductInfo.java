@@ -13,17 +13,17 @@ public class ProductInfo {
     private Long id;
 
     @Column(name = "level1")
-    private String level1;
+    private String level1; // 一级产品
 
     @Column(name = "level2")
-    private String level2;
+    private String level2; // 二级产品
 
     @Column(name = "level3")
-    private String level3;
+    private String level3; // 三级产品
 
     @Column(name = "level4")
-    private String level4;
+    private String level4; // 四级产品
 
     @Column(name = "level5")
-    private String level5;
+    private String level5; // 五级产品
 }

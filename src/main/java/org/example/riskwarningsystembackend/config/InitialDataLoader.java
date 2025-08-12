@@ -7,6 +7,7 @@ import org.example.riskwarningsystembackend.entity.ProductInfo;
 import org.example.riskwarningsystembackend.repository.CompanyInfoRepository;
 import org.example.riskwarningsystembackend.repository.ProductInfoRepository;
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.core.annotation.Order;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -16,12 +17,13 @@ import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 
 @Component
-public class DataLoader implements CommandLineRunner {
+@Order(1)
+public class InitialDataLoader implements CommandLineRunner {
 
     private final CompanyInfoRepository companyInfoRepository;
     private final ProductInfoRepository productInfoRepository;
 
-    public DataLoader(CompanyInfoRepository companyInfoRepository, ProductInfoRepository productInfoRepository) {
+    public InitialDataLoader(CompanyInfoRepository companyInfoRepository, ProductInfoRepository productInfoRepository) {
         this.companyInfoRepository = companyInfoRepository;
         this.productInfoRepository = productInfoRepository;
     }
