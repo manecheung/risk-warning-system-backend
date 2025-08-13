@@ -41,7 +41,7 @@ public class ProductGraphDataLoader implements CommandLineRunner {
 
     @Override
     @Transactional
-    public void run(String... args) throws Exception {
+    public void run(String... args) {
         if (productNodeRepository.count() == 0 && productEdgeRepository.count() == 0) {
             logger.info("开始构建产品图谱数据 (nodes and edges)...");
             loadProductGraphData();

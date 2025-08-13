@@ -21,8 +21,8 @@ public interface CompanyInfoRepository extends JpaRepository<CompanyInfo, Long> 
     long countByLegalDisputeCountLessThanEqual(int count);
 
     // 用于行业健康状况
-    @Query(value = "SELECT industry FROM company_info WHERE industry IS NOT NULL AND industry <> '' GROUP BY industry ORDER BY COUNT(id) DESC LIMIT 10", nativeQuery = true)
-    List<String> findTop10IndustriesByCompanyCount();
+    @Query(value = "SELECT industry FROM company_info WHERE industry IS NOT NULL AND industry <> '' GROUP BY industry ORDER BY COUNT(id) DESC LIMIT 15", nativeQuery = true)
+    List<String> findTop15IndustriesByCompanyCount();
 
     @Query("SELECT AVG(c.legalDisputeCount) FROM CompanyInfo c WHERE c.industry = :industry")
     Double findAverageLegalDisputesByIndustry(@Param("industry") String industry);

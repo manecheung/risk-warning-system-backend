@@ -44,7 +44,7 @@ public class DashboardController {
     @GetMapping("/risk-analysis")
     public RestResult<PaginatedResponseDto<RiskAnalysisDto>> getRiskAnalysis(
             @RequestParam(defaultValue = "1") int page,
-            @RequestParam(defaultValue = "10") int pageSize) {
+            @RequestParam(defaultValue = "20") int pageSize) {
         PageRequest pageRequest = PageRequest.of(page - 1, pageSize);
         return RestResult.success(dashboardService.getRiskAnalysis(pageRequest));
     }
