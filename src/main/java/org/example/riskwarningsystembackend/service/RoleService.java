@@ -73,7 +73,7 @@ public class RoleService {
     @Transactional
     public void updateRolePermissions(Long roleId, List<String> permissionKeys) {
         Role role = roleRepository.findById(roleId).orElseThrow(() -> new RuntimeException("Role not found"));
-        Set<Permission> permissions = permissionRepository.findByKeyIn(permissionKeys);
+        Set<Permission> permissions = new java.util.HashSet<>(permissionRepository.findByKeyIn(permissionKeys));
         role.setPermissions(permissions);
         roleRepository.save(role);
     }

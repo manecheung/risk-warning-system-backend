@@ -17,21 +17,22 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.CollectionUtils;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 public class UserService {
 
     private final UserRepository userRepository;
-
     private final RoleRepository roleRepository;
-
     private final OrganizationRepository organizationRepository;
-
     private final PasswordEncoder passwordEncoder;
 
     public UserService(UserRepository userRepository, RoleRepository roleRepository, OrganizationRepository organizationRepository, PasswordEncoder passwordEncoder) {
@@ -77,15 +78,17 @@ public class UserService {
         User user = new User();
         user.setUsername(createDTO.getUsername());
         user.setName(createDTO.getName());
-        user.setPassword(passwordEncoder.encode(createDTO.getPassword())); // 使用加密器加密密码
+        user.setPassword(passwordEncoder.encode(createDTO.getPassword()));
         user.setStatus(createDTO.getStatus());
         user.setLastLogin(LocalDateTime.now());
 
-        Role role = roleRepository.findById(createDTO.getRoleId()).orElseThrow(() -> new RuntimeException("Role not found"));
-        user.setRole(role);
+        updateUserRoles(user, createDTO.getRoleIds());
 
-        Organization organization = organizationRepository.findById(createDTO.getOrganizationId()).orElseThrow(() -> new RuntimeException("Organization not found"));
-        user.setOrganization(organization);
+        if (createDTO.getOrganizationId() != null) {
+            Organization organization = organizationRepository.findById(createDTO.getOrganizationId())
+                    .orElseThrow(() -> new RuntimeException("Organization not found with id: " + createDTO.getOrganizationId()));
+            user.setOrganization(organization);
+        }
 
         return userRepository.save(user);
     }
@@ -96,11 +99,15 @@ public class UserService {
             user.setName(updateDTO.getName());
             user.setStatus(updateDTO.getStatus());
 
-            Role role = roleRepository.findById(updateDTO.getRoleId()).orElseThrow(() -> new RuntimeException("Role not found"));
-            user.setRole(role);
+            updateUserRoles(user, updateDTO.getRoleIds());
 
-            Organization organization = organizationRepository.findById(updateDTO.getOrganizationId()).orElseThrow(() -> new RuntimeException("Organization not found"));
-            user.setOrganization(organization);
+            if (updateDTO.getOrganizationId() != null) {
+                Organization organization = organizationRepository.findById(updateDTO.getOrganizationId())
+                        .orElseThrow(() -> new RuntimeException("Organization not found with id: " + updateDTO.getOrganizationId()));
+                user.setOrganization(organization);
+            } else {
+                user.setOrganization(null);
+            }
 
             return userRepository.save(user);
         });
@@ -115,12 +122,26 @@ public class UserService {
         return false;
     }
 
+    private void updateUserRoles(User user, Set<Long> roleIds) {
+        if (CollectionUtils.isEmpty(roleIds)) {
+            user.setRoles(new HashSet<>());
+        } else {
+            Set<Role> roles = new HashSet<>(roleRepository.findAllById(roleIds));
+            if (roles.size() != roleIds.size()) {
+                throw new RuntimeException("One or more roles not found");
+            }
+            user.setRoles(roles);
+        }
+    }
+
     private UserDTO convertToDto(User user) {
         UserDTO dto = new UserDTO();
         dto.setId(user.getId());
         dto.setUsername(user.getUsername());
         dto.setName(user.getName());
-        dto.setRole(user.getRole() != null ? user.getRole().getName() : null);
+        if (user.getRoles() != null) {
+            dto.setRoles(user.getRoles().stream().map(Role::getName).collect(Collectors.toList()));
+        }
         dto.setOrganization(user.getOrganization() != null ? user.getOrganization().getName() : null);
         dto.setStatus(user.getStatus());
         dto.setLastLogin(user.getLastLogin());

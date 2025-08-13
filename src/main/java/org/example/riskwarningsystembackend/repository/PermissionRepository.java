@@ -4,8 +4,9 @@ import org.example.riskwarningsystembackend.entity.Permission;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
-import java.util.Set;
+import java.util.Optional;
 
 public interface PermissionRepository extends JpaRepository<Permission, Long> {
-    Set<Permission> findByKeyIn(List<String> keys);
+    Optional<Permission> findByKey(String key);
+    List<Permission> findByKeyIn(List<String> keys);
 }
