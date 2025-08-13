@@ -4,6 +4,8 @@ import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.ToString;
 
 import java.time.LocalDateTime;
 import java.util.Set;
@@ -28,6 +30,8 @@ public class User {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "organization_id")
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
     @JsonBackReference("org-user")
     private Organization organization;
 
@@ -38,5 +42,7 @@ public class User {
             inverseJoinColumns = @JoinColumn(name = "role_id")
     )
     @JsonManagedReference("user-role")
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
     private Set<Role> roles;
 }

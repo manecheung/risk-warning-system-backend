@@ -4,6 +4,8 @@ import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.ToString;
 
 import java.util.Set;
 
@@ -20,6 +22,8 @@ public class Role {
 
     @ManyToMany(mappedBy = "roles", fetch = FetchType.LAZY)
     @JsonBackReference("user-role")
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
     private Set<User> users;
 
     @ManyToMany(fetch = FetchType.EAGER)
@@ -29,5 +33,7 @@ public class Role {
             inverseJoinColumns = @JoinColumn(name = "permission_id")
     )
     @JsonManagedReference("role-permission")
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
     private Set<Permission> permissions;
 }

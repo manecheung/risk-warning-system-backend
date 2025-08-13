@@ -4,6 +4,8 @@ import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.ToString;
 
 import java.util.Set;
 
@@ -26,9 +28,13 @@ public class Organization {
 
     @OneToMany(mappedBy = "parent", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @JsonManagedReference("org-parent")
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
     private Set<Organization> children;
 
     @OneToMany(mappedBy = "organization", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @JsonManagedReference("org-user")
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
     private Set<User> users;
 }

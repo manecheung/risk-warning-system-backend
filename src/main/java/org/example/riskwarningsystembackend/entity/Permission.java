@@ -3,6 +3,8 @@ package org.example.riskwarningsystembackend.entity;
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.ToString;
 
 import java.util.Set;
 
@@ -23,5 +25,7 @@ public class Permission {
 
     @ManyToMany(mappedBy = "permissions", fetch = FetchType.LAZY)
     @JsonBackReference("role-permission")
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
     private Set<Role> roles;
 }
