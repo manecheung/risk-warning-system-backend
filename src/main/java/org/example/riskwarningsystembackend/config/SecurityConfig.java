@@ -19,7 +19,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 
 @Configuration
 @EnableWebSecurity
-@EnableMethodSecurity() // 启用方法级别的安全注解
+ @EnableMethodSecurity() // 启用方法级别的安全注解
 public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
