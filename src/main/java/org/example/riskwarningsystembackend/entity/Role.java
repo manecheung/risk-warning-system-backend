@@ -1,28 +1,33 @@
 package org.example.riskwarningsystembackend.entity;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.Data;
+
 import java.util.Set;
 
-@Entity
 @Data
+@Entity
 @Table(name = "roles")
 public class Role {
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false, unique = true)
     private String name;
-
     private String description;
+
+    @ManyToMany(mappedBy = "roles", fetch = FetchType.LAZY)
+    @JsonBackReference("user-role")
+    private Set<User> users;
 
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(
-        name = "role_permissions",
-        joinColumns = @JoinColumn(name = "role_id"),
-        inverseJoinColumns = @JoinColumn(name = "permission_id")
+            name = "role_permissions",
+            joinColumns = @JoinColumn(name = "role_id"),
+            inverseJoinColumns = @JoinColumn(name = "permission_id")
     )
+    @JsonManagedReference("role-permission")
     private Set<Permission> permissions;
 }

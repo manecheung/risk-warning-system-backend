@@ -33,19 +33,19 @@ public class OrganizationService {
                 .collect(Collectors.toMap(Organization::getId, org -> org));
 
         return allOrgs.stream()
-                .filter(org -> org.getParentId() == null || !orgMap.containsKey(org.getParentId()))
+                .filter(org -> org.getParent() == null || !orgMap.containsKey(org.getParent().getId()))
                 .map(rootOrg -> buildTree(rootOrg, allOrgs))
                 .collect(Collectors.toList());
     }
 
     private OrganizationTreeDTO buildTree(Organization org, List<Organization> allOrgs) {
         long userCount = userRepository.countByOrganizationId(org.getId());
-        String parentName = Optional.ofNullable(org.getParentId())
-                .map(id -> organizationRepository.findById(id).map(Organization::getName).orElse("-"))
+        String parentName = Optional.ofNullable(org.getParent())
+                .map(Organization::getName)
                 .orElse("-");
 
         List<OrganizationTreeDTO> children = allOrgs.stream()
-                .filter(child -> org.getId().equals(child.getParentId()))
+                .filter(child -> child.getParent() != null && org.getId().equals(child.getParent().getId()))
                 .map(child -> buildTree(child, allOrgs))
                 .collect(Collectors.toList());
 
@@ -63,7 +63,9 @@ public class OrganizationService {
     public Organization createOrganization(OrganizationCreateDTO createDTO) {
         Organization org = new Organization();
         org.setName(createDTO.getName());
-        org.setParentId(createDTO.getParentId());
+        if (createDTO.getParentId() != null) {
+            organizationRepository.findById(createDTO.getParentId()).ifPresent(org::setParent);
+        }
         org.setManager(createDTO.getManager());
         return organizationRepository.save(org);
     }
@@ -73,14 +75,17 @@ public class OrganizationService {
         return organizationRepository.findById(id).map(org -> {
             org.setName(updateDTO.getName());
             org.setManager(updateDTO.getManager());
+            // 注意：此示例不处理父级组织的更新，如果需要，可以在此添加逻辑
             return organizationRepository.save(org);
         });
     }
 
     @Transactional
     public boolean deleteOrganization(Long id) {
-        long childrenCount = organizationRepository.countByParentId(id);
-        if (childrenCount > 0) {
+        // This check is simplified as children are loaded lazily.
+        // A custom repository method might be more efficient.
+        Optional<Organization> orgOptional = organizationRepository.findById(id);
+        if (orgOptional.isPresent() && !orgOptional.get().getChildren().isEmpty()) {
             // Cannot delete organization with children
             return false;
         }
@@ -91,7 +96,7 @@ public class OrganizationService {
             return false;
         }
 
-        if (organizationRepository.existsById(id)) {
+        if (orgOptional.isPresent()) {
             organizationRepository.deleteById(id);
             return true;
         }
