@@ -45,4 +45,9 @@ public class User {
     @ToString.Exclude
     @EqualsAndHashCode.Exclude
     private Set<Role> roles;
+
+    @OneToMany(mappedBy = "manager", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
+    private Set<Organization> managedOrganizations;
 }

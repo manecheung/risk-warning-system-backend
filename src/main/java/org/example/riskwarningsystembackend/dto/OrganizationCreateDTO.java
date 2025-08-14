@@ -6,5 +6,5 @@ import lombok.Data;
 public class OrganizationCreateDTO {
     private String name;
     private Long parentId;
-    private String manager;
+    private Long managerId;
 }

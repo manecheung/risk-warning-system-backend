@@ -15,6 +15,7 @@ public class OrganizationTreeDTO {
     private String parent;
     private Long parentId; // 父组织的ID
     private String manager;
+    private Long managerId;
     private int userCount;
     private List<OrganizationTreeDTO> children;
 

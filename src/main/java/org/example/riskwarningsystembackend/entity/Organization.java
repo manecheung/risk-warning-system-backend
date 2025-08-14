@@ -19,7 +19,9 @@ public class Organization {
 
     private String name;
     private String description;
-    private String manager;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "manager_id")
+    private User manager;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "parent_id")

@@ -65,13 +65,11 @@ public class OrganizationController {
      */
     @DeleteMapping("/{id}")
     public ResponseEntity<RestResult<Void>> deleteOrganization(@PathVariable Long id) {
-        boolean deleted = organizationService.deleteOrganization(id);
-        if (deleted) {
+        try {
+            organizationService.deleteOrganization(id);
             return ResponseEntity.ok(RestResult.success());
-        } else {
-            // 根据业务逻辑，删除失败可能是因为资源不存在，或者存在子节点/用户
-            // 为简化，这里统一返回400 Bad Request，表示业务约束不满足
-            return new ResponseEntity<>(RestResult.failure(ResultCode.BAD_REQUEST, "删除失败，该组织下可能存在子组织或用户，或该组织不存在。"), HttpStatus.BAD_REQUEST);
+        } catch (IllegalStateException e) {
+            return new ResponseEntity<>(RestResult.failure(ResultCode.BAD_REQUEST, e.getMessage()), HttpStatus.BAD_REQUEST);
         }
     }
 }

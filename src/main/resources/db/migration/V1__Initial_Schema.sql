@@ -81,9 +81,8 @@ CREATE TABLE organizations (
     id BIGSERIAL PRIMARY KEY,
     name VARCHAR(255),
     description VARCHAR(255),
-    manager VARCHAR(255),
-    parent_id BIGINT,
-    CONSTRAINT fk_org_parent FOREIGN KEY (parent_id) REFERENCES organizations(id)
+    manager_id BIGINT,
+    parent_id BIGINT
 );
 
 CREATE TABLE users (
@@ -96,9 +95,16 @@ CREATE TABLE users (
     enabled BOOLEAN NOT NULL DEFAULT true,
     status VARCHAR(255),
     last_login TIMESTAMP,
-    organization_id BIGINT,
-    CONSTRAINT fk_user_org FOREIGN KEY (organization_id) REFERENCES organizations(id)
+    organization_id BIGINT
 );
+
+-- Add constraints after table creation to handle circular dependencies
+ALTER TABLE organizations
+    ADD CONSTRAINT fk_org_parent FOREIGN KEY (parent_id) REFERENCES organizations(id),
+    ADD CONSTRAINT fk_org_manager FOREIGN KEY (manager_id) REFERENCES users(id);
+
+ALTER TABLE users
+    ADD CONSTRAINT fk_user_org FOREIGN KEY (organization_id) REFERENCES organizations(id);
 
 CREATE TABLE roles (
     id BIGSERIAL PRIMARY KEY,
