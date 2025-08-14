@@ -9,6 +9,8 @@ import java.util.Set;
 
 public interface CompanyRelationRepository extends JpaRepository<CompanyRelation, Long> {
 
+    List<CompanyRelation> findByRelationType(String relationType);
+
     /**
      * 根据单个公司ID查找所有相关的关系。
      * 无论是作为关系的一方（companyOneId）还是另一方（companyTwoId），

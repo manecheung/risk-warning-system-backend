@@ -4,10 +4,17 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 import org.example.riskwarningsystembackend.dto.SimulationDTO;
 import org.example.riskwarningsystembackend.entity.ChainRiskSimulation;
+import org.example.riskwarningsystembackend.entity.CompanyInfo;
+import org.example.riskwarningsystembackend.entity.CompanyRelation;
 import org.example.riskwarningsystembackend.exception.ResourceNotFoundException;
 import org.example.riskwarningsystembackend.repository.ChainRiskSimulationRepository;
+import org.example.riskwarningsystembackend.repository.CompanyInfoRepository;
+import org.example.riskwarningsystembackend.repository.CompanyRelationRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -20,15 +27,127 @@ import org.springframework.util.StringUtils;
 
 import java.io.IOException;
 import java.util.*;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Service
 public class ChainRiskService {
 
     @Autowired
     private ChainRiskSimulationRepository simulationRepository;
+    @Autowired
+    private CompanyInfoRepository companyInfoRepository;
+    @Autowired
+    private CompanyRelationRepository companyRelationRepository;
 
     @Autowired
     private ObjectMapper objectMapper; // Jackson's ObjectMapper for JSON processing
+
+    // DTO for Risk Propagation Simulation Result
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class RiskPropagationDTO {
+        private List<RiskNode> nodes;
+        private List<RiskEdge> edges;
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class RiskNode {
+        private String id;
+        private String label;
+        private double riskValue;
+        private int level;
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class RiskEdge {
+        private String source;
+        private String target;
+        private String label;
+    }
+
+
+    @Transactional(readOnly = true)
+    public RiskPropagationDTO runNewSimulation(String startCompanyId, double initialRisk, double decayRate, int maxLevel) {
+        // 1. Fetch all companies and relations
+        Map<Long, CompanyInfo> companyMap = companyInfoRepository.findAll().stream()
+                .collect(Collectors.toMap(CompanyInfo::getId, Function.identity()));
+
+        if (!companyMap.containsKey(Long.parseLong(startCompanyId))) {
+            throw new ResourceNotFoundException("Start company with id " + startCompanyId + " not found.");
+        }
+
+        List<CompanyRelation> relations = companyRelationRepository.findByRelationType("partner");
+
+        // 2. Build adjacency list for graph traversal
+        Map<Long, List<Long>> adjList = new HashMap<>();
+        for (CompanyRelation relation : relations) {
+            adjList.computeIfAbsent(relation.getCompanyOneId(), k -> new ArrayList<>()).add(relation.getCompanyTwoId());
+            adjList.computeIfAbsent(relation.getCompanyTwoId(), k -> new ArrayList<>()).add(relation.getCompanyOneId());
+        }
+
+        // 3. BFS Simulation Logic
+        Map<Long, RiskNode> affectedNodes = new HashMap<>();
+        Set<String> affectedEdges = new HashSet<>();
+
+        Queue<RiskNode> queue = new LinkedList<>();
+
+        // Initial node
+        CompanyInfo startCompany = companyMap.get(Long.parseLong(startCompanyId));
+        RiskNode startNode = new RiskNode(startCompanyId, startCompany.getName(), initialRisk, 0);
+        queue.add(startNode);
+        affectedNodes.put(Long.parseLong(startCompanyId), startNode);
+
+        while (!queue.isEmpty()) {
+            RiskNode currentNode = queue.poll();
+
+            if (currentNode.getLevel() >= maxLevel) {
+                continue;
+            }
+
+            Long currentId = Long.parseLong(currentNode.getId());
+            if (adjList.containsKey(currentId)) {
+                for (Long neighborId : adjList.get(currentId)) {
+                    double newRisk = currentNode.getRiskValue() * decayRate;
+
+                    if (newRisk < 0.01) continue; // Stop propagation if risk is negligible
+
+                    int newLevel = currentNode.getLevel() + 1;
+
+                    if (!affectedNodes.containsKey(neighborId) || affectedNodes.get(neighborId).getRiskValue() < newRisk) {
+                        CompanyInfo neighborCompany = companyMap.get(neighborId);
+                        if (neighborCompany != null) {
+                            RiskNode neighborNode = new RiskNode(
+                                    String.valueOf(neighborId),
+                                    neighborCompany.getName(),
+                                    newRisk,
+                                    newLevel
+                            );
+                            affectedNodes.put(neighborId, neighborNode);
+                            queue.add(neighborNode);
+                        }
+                    }
+                    // Add edge to result
+                    String edgeKey = currentId < neighborId ? currentId + "-" + neighborId : neighborId + "-" + currentId;
+                    affectedEdges.add(edgeKey);
+                }
+            }
+        }
+
+        // 4. Prepare response DTO
+        List<RiskEdge> finalEdges = affectedEdges.stream().map(edgeKey -> {
+            String[] ids = edgeKey.split("-");
+            return new RiskEdge(ids[0], ids[1], "合作");
+        }).collect(Collectors.toList());
+
+        return new RiskPropagationDTO(new ArrayList<>(affectedNodes.values()), finalEdges);
+    }
+
 
     @Transactional(readOnly = true)
     public Page<ChainRiskSimulation> getSimulations(int page, int pageSize, String keyword) {
@@ -109,7 +228,7 @@ public class ChainRiskService {
             List<String> currentLevelNodes = new ArrayList<>();
             for (int i = 0; i < levelSize; i++) {
                 String u = queue.poll();
-                if (!u.equals(startNodeId)) { // Don't include the source in the path
+                if (!startNodeId.equals(u)) { // Safer equals check
                     currentLevelNodes.add(u);
                 }
 
@@ -138,3 +257,4 @@ public class ChainRiskService {
         return response;
     }
 }
+

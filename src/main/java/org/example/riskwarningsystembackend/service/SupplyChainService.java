@@ -22,6 +22,10 @@ public class SupplyChainService {
         this.companyInfoRepository = companyInfoRepository;
     }
 
+    public List<CompanyInfo> getAllCompanies() {
+        return companyInfoRepository.findAll();
+    }
+
     public SupplyChainSummaryDTO getSummary() {
         long highRiskCount = companyInfoRepository.countByLegalDisputeCountGreaterThanEqual(500);
         long mediumRiskCount = companyInfoRepository.countByLegalDisputeCountBetween(101, 499);

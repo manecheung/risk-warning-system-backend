@@ -8,8 +8,12 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface CompanyInfoRepository extends JpaRepository<CompanyInfo, Long> {
+
+    Optional<CompanyInfo> findByName(String name);
+
     @Query("SELECT COUNT(DISTINCT c.industry) FROM CompanyInfo c WHERE c.industry IS NOT NULL AND c.industry <> ''")
     long countDistinctIndustry();
 

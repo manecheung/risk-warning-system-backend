@@ -12,6 +12,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/api/supply-chain")
 public class SupplyChainController {
@@ -24,6 +26,11 @@ public class SupplyChainController {
     public SupplyChainController(SupplyChainService supplyChainService, CompanyRelationService companyRelationService) {
         this.supplyChainService = supplyChainService;
         this.companyRelationService = companyRelationService;
+    }
+
+    @GetMapping("/all-companies")
+    public RestResult<List<CompanyInfo>> getAllCompanies() {
+        return RestResult.success(supplyChainService.getAllCompanies());
     }
 
     @GetMapping("/summary")
