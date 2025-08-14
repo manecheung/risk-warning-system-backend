@@ -1,6 +1,6 @@
 package org.example.riskwarningsystembackend.service;
 
-import org.example.riskwarningsystembackend.dto.ArticleDto;
+import org.example.riskwarningsystembackend.dto.ArticleDTO;
 import org.example.riskwarningsystembackend.entity.MonitoringArticle;
 import org.example.riskwarningsystembackend.exception.ResourceNotFoundException;
 import org.example.riskwarningsystembackend.repository.MonitoringArticleRepository;
@@ -55,7 +55,7 @@ public class MonitoringService {
     }
 
     @Transactional
-    public MonitoringArticle createArticle(ArticleDto articleDto) {
+    public MonitoringArticle createArticle(ArticleDTO articleDto) {
         MonitoringArticle article = new MonitoringArticle();
         article.setType(articleDto.getType());
         article.setTitle(articleDto.getTitle());
@@ -73,7 +73,7 @@ public class MonitoringService {
     }
 
     @Transactional
-    public MonitoringArticle updateArticle(Long id, ArticleDto articleDto) {
+    public MonitoringArticle updateArticle(Long id, ArticleDTO articleDto) {
         MonitoringArticle article = monitoringArticleRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Article not found with id: " + id));
 

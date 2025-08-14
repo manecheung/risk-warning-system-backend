@@ -3,7 +3,7 @@ package org.example.riskwarningsystembackend.controller;
 import jakarta.validation.Valid;
 import org.example.riskwarningsystembackend.common.RestResult;
 import org.example.riskwarningsystembackend.common.ResultCode;
-import org.example.riskwarningsystembackend.dto.ArticleDto;
+import org.example.riskwarningsystembackend.dto.ArticleDTO;
 import org.example.riskwarningsystembackend.dto.PaginatedResponseDTO;
 import org.example.riskwarningsystembackend.entity.MonitoringArticle;
 import org.example.riskwarningsystembackend.service.MonitoringService;
@@ -43,13 +43,13 @@ public class MonitoringController {
     }
 
     @PostMapping
-    public ResponseEntity<RestResult<MonitoringArticle>> createArticle(@Valid @RequestBody ArticleDto articleDto) {
+    public ResponseEntity<RestResult<MonitoringArticle>> createArticle(@Valid @RequestBody ArticleDTO articleDto) {
         MonitoringArticle createdArticle = monitoringService.createArticle(articleDto);
         return new ResponseEntity<>(RestResult.success(createdArticle), HttpStatus.CREATED);
     }
 
     @PutMapping("/{id}")
-    public RestResult<MonitoringArticle> updateArticle(@PathVariable Long id, @Valid @RequestBody ArticleDto articleDto) {
+    public RestResult<MonitoringArticle> updateArticle(@PathVariable Long id, @Valid @RequestBody ArticleDTO articleDto) {
         MonitoringArticle updatedArticle = monitoringService.updateArticle(id, articleDto);
         return RestResult.success(updatedArticle);
     }

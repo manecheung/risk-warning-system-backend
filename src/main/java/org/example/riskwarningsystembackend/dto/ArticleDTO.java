@@ -12,7 +12,7 @@ import java.util.List;
  * DTO for creating and updating monitoring articles.
  */
 @Data
-public class ArticleDto {
+public class ArticleDTO {
 
     @NotBlank(message = "文章类型不能为空")
     private String type;
