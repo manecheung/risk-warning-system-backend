@@ -1,7 +1,7 @@
 package org.example.riskwarningsystembackend.service;
 
 import org.example.riskwarningsystembackend.dto.CompanyListDTO;
-import org.example.riskwarningsystembackend.dto.PaginatedResponseDto;
+import org.example.riskwarningsystembackend.dto.PaginatedResponseDTO;
 import org.example.riskwarningsystembackend.dto.SupplyChainSummaryDTO;
 import org.example.riskwarningsystembackend.entity.CompanyInfo;
 import org.example.riskwarningsystembackend.repository.CompanyInfoRepository;
@@ -30,7 +30,7 @@ public class SupplyChainService {
         return new SupplyChainSummaryDTO(networkRisk, highRiskCount, mediumRiskCount, lowRiskCount);
     }
 
-    public PaginatedResponseDto<CompanyListDTO> getCompanies(String keyword, Pageable pageable) {
+    public PaginatedResponseDTO<CompanyListDTO> getCompanies(String keyword, Pageable pageable) {
         Page<CompanyInfo> companyPage;
         if (StringUtils.hasText(keyword)) {
             companyPage = companyInfoRepository.findByNameContainingIgnoreCaseOrIndustryContainingIgnoreCase(keyword, keyword, pageable);
@@ -39,7 +39,7 @@ public class SupplyChainService {
         }
 
         Page<CompanyListDTO> dtoPage = companyPage.map(this::mapToCompanyListDTO);
-        return new PaginatedResponseDto<>(dtoPage);
+        return new PaginatedResponseDTO<>(dtoPage);
     }
 
     public CompanyInfo getCompanyById(Long id) {

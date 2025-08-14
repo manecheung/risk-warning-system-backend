@@ -94,9 +94,9 @@ public class DashboardService {
         return new SupplyChainRiskDTO(indicators, data);
     }
 
-    public PaginatedResponseDto<RiskAnalysisDto> getRiskAnalysis(PageRequest pageRequest) {
+    public PaginatedResponseDTO<RiskAnalysisDTO> getRiskAnalysis(PageRequest pageRequest) {
         Page<CompanyInfo> highRiskCompanies = companyInfoRepository.findHighRiskCompanies(pageRequest);
-        Page<RiskAnalysisDto> riskAnalysisDtoPage = highRiskCompanies.map(company -> {
+        Page<RiskAnalysisDTO> riskAnalysisDtoPage = highRiskCompanies.map(company -> {
             String riskLevel;
             String reason = "";
             int legalDisputes = company.getLegalDisputeCount() != null ? company.getLegalDisputeCount() : 0;
@@ -118,9 +118,9 @@ public class DashboardService {
             }
 
             String levelClass = "risk-" + (riskLevel.equals("高") ? "high" : (riskLevel.equals("中") ? "medium" : "low"));
-            return new RiskAnalysisDto(company.getName(), riskLevel, levelClass, reason);
+            return new RiskAnalysisDTO(company.getName(), riskLevel, levelClass, reason);
         });
-        return new PaginatedResponseDto<>(riskAnalysisDtoPage);
+        return new PaginatedResponseDTO<>(riskAnalysisDtoPage);
     }
 
     public List<RiskMapDTO> getRiskMap() {

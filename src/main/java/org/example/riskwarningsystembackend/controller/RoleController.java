@@ -22,10 +22,10 @@ public class RoleController {
         this.roleService = roleService;
     }
 
-    @GetMapping
-    public ResponseEntity<RestResult<List<RoleDTO>>> getAllRoles() {
+        @GetMapping
+    public RestResult<List<RoleDTO>> getAllRoles() {
         List<RoleDTO> roles = roleService.getAllRoles();
-        return ResponseEntity.ok(RestResult.success(roles));
+        return RestResult.success(roles);
     }
 
     @PostMapping
@@ -52,14 +52,14 @@ public class RoleController {
     }
 
     @GetMapping("/{id}/permissions")
-    public ResponseEntity<RestResult<PermissionDataDTO>> getRolePermissions(@PathVariable Long id) {
+    public RestResult<PermissionDataDTO> getRolePermissions(@PathVariable Long id) {
         PermissionDataDTO permissions = roleService.getPermissionsByRoleId(id);
-        return ResponseEntity.ok(RestResult.success(permissions));
+        return RestResult.success(permissions);
     }
 
     @PutMapping("/{id}/permissions")
-    public ResponseEntity<RestResult<Void>> updateRolePermissions(@PathVariable Long id, @RequestBody UpdatePermissionsRequest request) {
+    public RestResult<Void> updateRolePermissions(@PathVariable Long id, @RequestBody PermissionsUpdateRequestDTO request) {
         roleService.updateRolePermissions(id, request.getPermissionKeys());
-        return ResponseEntity.ok(RestResult.success());
+        return RestResult.success();
     }
 }

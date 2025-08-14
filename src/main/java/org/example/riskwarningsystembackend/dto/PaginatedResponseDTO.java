@@ -8,7 +8,7 @@ import java.util.List;
 
 @Data
 @AllArgsConstructor
-public class PaginatedResponseDto<T> {
+public class PaginatedResponseDTO<T> {
     private int page; // 当前页码
     private int pageSize; // 每页的记录数
     private long totalRecords; // 总记录数
@@ -17,7 +17,7 @@ public class PaginatedResponseDto<T> {
     private boolean hasNextPage; // 判断是否有下一页
     private List<T> records; // 当前页的记录
 
-    public PaginatedResponseDto(Page<T> page) {
+    public PaginatedResponseDTO(Page<T> page) {
         this.page = page.getNumber() + 1; // 获取当前页码
         this.pageSize = page.getSize(); // 获取每页记录数
         this.totalRecords = page.getTotalElements(); // 获取总记录数

@@ -2,7 +2,7 @@ package org.example.riskwarningsystembackend.controller;
 
 import org.example.riskwarningsystembackend.common.RestResult;
 import org.example.riskwarningsystembackend.dto.CompanyListDTO;
-import org.example.riskwarningsystembackend.dto.PaginatedResponseDto;
+import org.example.riskwarningsystembackend.dto.PaginatedResponseDTO;
 import org.example.riskwarningsystembackend.dto.SupplyChainSummaryDTO;
 import org.example.riskwarningsystembackend.entity.CompanyInfo;
 import org.example.riskwarningsystembackend.service.CompanyRelationService;
@@ -32,7 +32,7 @@ public class SupplyChainController {
     }
 
     @GetMapping("/companies")
-    public RestResult<PaginatedResponseDto<CompanyListDTO>> getCompanies(
+    public RestResult<PaginatedResponseDTO<CompanyListDTO>> getCompanies(
             @RequestParam(required = false) String keyword,
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "10") int pageSize) {

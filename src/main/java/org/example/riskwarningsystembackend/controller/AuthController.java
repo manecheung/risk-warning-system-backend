@@ -2,15 +2,14 @@ package org.example.riskwarningsystembackend.controller;
 
 import jakarta.servlet.http.HttpServletRequest;
 import org.example.riskwarningsystembackend.common.RestResult;
-import org.example.riskwarningsystembackend.dto.LoginRequest;
-import org.example.riskwarningsystembackend.dto.LoginResponse;
+import org.example.riskwarningsystembackend.dto.LoginRequestDTO;
+import org.example.riskwarningsystembackend.dto.LoginResponseDTO;
 import org.example.riskwarningsystembackend.dto.UserInfoDTO;
 import org.example.riskwarningsystembackend.entity.Permission;
 import org.example.riskwarningsystembackend.security.CustomUserDetails;
 import org.example.riskwarningsystembackend.security.JwtTokenProvider;
 import org.example.riskwarningsystembackend.service.TokenBlacklistService;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -42,12 +41,12 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<RestResult<LoginResponse>> authenticateUser(@RequestBody LoginRequest loginRequest) {
+    public RestResult<LoginResponseDTO> authenticateUser(@RequestBody LoginRequestDTO loginRequestDTO) {
 
         Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(
-                        loginRequest.getUsername(),
-                        loginRequest.getPassword()
+                        loginRequestDTO.getUsername(),
+                        loginRequestDTO.getPassword()
                 )
         );
 
@@ -69,17 +68,17 @@ public class AuthController {
                 permissions
         );
 
-        LoginResponse loginResponse = new LoginResponse(jwt, jwtExpirationInSeconds, userInfo);
+        LoginResponseDTO loginResponseDTO = new LoginResponseDTO(jwt, jwtExpirationInSeconds, userInfo);
 
-        return ResponseEntity.ok(new RestResult<>(200, "登录成功", loginResponse));
+        return new RestResult<>(200, "登录成功", loginResponseDTO);
     }
 
     @PostMapping("/logout")
-    public ResponseEntity<RestResult<Void>> logoutUser(HttpServletRequest request) {
+    public RestResult<Void> logoutUser(HttpServletRequest request) {
         String token = tokenProvider.resolveToken(request);
         if (StringUtils.hasText(token)) {
             tokenBlacklistService.blacklistToken(token);
         }
-        return ResponseEntity.ok(RestResult.success());
+        return RestResult.success();
     }
 }

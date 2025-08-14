@@ -25,8 +25,8 @@ public class PermissionController {
      * @return 权限树
      */
     @GetMapping
-    public ResponseEntity<RestResult<List<PermissionTreeDTO>>> getAllPermissions() {
+    public RestResult<List<PermissionTreeDTO>> getAllPermissions() {
         List<PermissionTreeDTO> permissionTree = permissionService.getAllPermissionsAsTree();
-        return ResponseEntity.ok(RestResult.success(permissionTree));
+        return RestResult.success(permissionTree);
     }
 }

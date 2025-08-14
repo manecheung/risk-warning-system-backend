@@ -29,9 +29,9 @@ public class OrganizationController {
      * @return 组织架构的层级列表
      */
     @GetMapping
-    public ResponseEntity<RestResult<List<OrganizationTreeDTO>>> getOrganizationTree() {
+    public RestResult<List<OrganizationTreeDTO>> getOrganizationTree() {
         List<OrganizationTreeDTO> tree = organizationService.getOrganizationTree();
-        return ResponseEntity.ok(RestResult.success(tree));
+        return RestResult.success(tree);
     }
 
     /**

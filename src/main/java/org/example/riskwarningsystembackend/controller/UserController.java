@@ -2,7 +2,7 @@ package org.example.riskwarningsystembackend.controller;
 
 import org.example.riskwarningsystembackend.common.RestResult;
 import org.example.riskwarningsystembackend.common.ResultCode;
-import org.example.riskwarningsystembackend.dto.PaginatedResponseDto;
+import org.example.riskwarningsystembackend.dto.PaginatedResponseDTO;
 import org.example.riskwarningsystembackend.dto.UserCreateDTO;
 import org.example.riskwarningsystembackend.dto.UserDTO;
 import org.example.riskwarningsystembackend.dto.UserUpdateDTO;
@@ -28,13 +28,13 @@ public class UserController {
     }
 
     @GetMapping
-    public ResponseEntity<RestResult<PaginatedResponseDto<UserDTO>>> getUsers(
+    public RestResult<PaginatedResponseDTO<UserDTO>> getUsers(
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "10") int pageSize,
             @RequestParam(required = false) String keyword) {
         Pageable pageable = PageRequest.of(page - 1, pageSize, Sort.by("id").descending());
-        PaginatedResponseDto<UserDTO> users = userService.getUsers(pageable, keyword);
-        return ResponseEntity.ok(RestResult.success(users));
+        PaginatedResponseDTO<UserDTO> users = userService.getUsers(pageable, keyword);
+        return RestResult.success(users);
     }
 
     @GetMapping("/{id}")

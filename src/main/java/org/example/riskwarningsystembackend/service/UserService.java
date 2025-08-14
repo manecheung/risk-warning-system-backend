@@ -1,7 +1,7 @@
 package org.example.riskwarningsystembackend.service;
 
 import jakarta.persistence.criteria.Predicate;
-import org.example.riskwarningsystembackend.dto.PaginatedResponseDto;
+import org.example.riskwarningsystembackend.dto.PaginatedResponseDTO;
 import org.example.riskwarningsystembackend.dto.UserCreateDTO;
 import org.example.riskwarningsystembackend.dto.UserDTO;
 import org.example.riskwarningsystembackend.dto.UserUpdateDTO;
@@ -53,7 +53,7 @@ public class UserService {
      * @return 分页的用户数据
      */
     @Transactional(readOnly = true)
-    public PaginatedResponseDto<UserDTO> getUsers(Pageable pageable, String keyword) {
+    public PaginatedResponseDTO<UserDTO> getUsers(Pageable pageable, String keyword) {
         Specification<User> spec = (root, query, cb) -> {
             if (keyword == null || keyword.trim().isEmpty()) {
                 return cb.conjunction();
@@ -67,7 +67,7 @@ public class UserService {
         Page<User> userPage = userRepository.findAll(spec, pageable);
         List<UserDTO> userDTOs = userPage.getContent().stream().map(this::convertToDto).toList();
 
-        return new PaginatedResponseDto<>(
+        return new PaginatedResponseDTO<>(
                 userPage.getNumber() + 1,
                 userPage.getSize(),
                 userPage.getTotalElements(),
