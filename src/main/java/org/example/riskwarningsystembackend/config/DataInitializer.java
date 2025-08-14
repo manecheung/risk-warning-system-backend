@@ -53,14 +53,14 @@ public class DataInitializer implements CommandLineRunner {
         Permission dashboard = createPermission("dashboard", "首页仪表盘", null);
         createPermission("dashboard:view", "查看权限", dashboard);
 
-        Permission monitoring = createPermission("monitoring", "风险监测", null);
+        Permission monitoring = createPermission("monitoring", "网络信息监测", null);
         createPermission("monitoring:view", "查看资讯", monitoring);
 
-        Permission chainRisk = createPermission("chain-risk", "产业链风险", null);
+        Permission chainRisk = createPermission("chain-risk", "产业链风险预警", null);
         createPermission("chain-risk:view", "查看风险", chainRisk);
         createPermission("chain-risk:manage", "管理模拟", chainRisk);
 
-        Permission supplyChain = createPermission("supply-chain", "供应链管理", null);
+        Permission supplyChain = createPermission("supply-chain", "供应链风险评估", null);
         createPermission("supply-chain:view", "查看列表", supplyChain);
         createPermission("supply-chain:manage", "编辑与删除", supplyChain);
 
@@ -96,7 +96,7 @@ public class DataInitializer implements CommandLineRunner {
         // 普通用户角色 (可选，可以创建一个仅有查看权限的角色)
         Role userRole = new Role();
         userRole.setName("普通用户");
-        userRole.setDescription("仅能查看首页看板和预警信息");
+        userRole.setDescription("仅能查看首页看板");
         Permission dashboardView = permissionRepository.findByKey("dashboard:view").orElseThrow();
         userRole.setPermissions(new HashSet<>(List.of(dashboardView)));
         roleRepository.save(userRole);
