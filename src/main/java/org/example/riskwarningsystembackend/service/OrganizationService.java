@@ -40,9 +40,10 @@ public class OrganizationService {
 
     private OrganizationTreeDTO buildTree(Organization org, List<Organization> allOrgs) {
         long userCount = userRepository.countByOrganizationId(org.getId());
-        String parentName = Optional.ofNullable(org.getParent())
-                .map(Organization::getName)
-                .orElse("-");
+        // 获取父节点，并从中提取名称和ID
+        Organization parent = org.getParent();
+        String parentName = Optional.ofNullable(parent).map(Organization::getName).orElse("-");
+        Long parentId = Optional.ofNullable(parent).map(Organization::getId).orElse(null);
 
         List<OrganizationTreeDTO> children = allOrgs.stream()
                 .filter(child -> child.getParent() != null && org.getId().equals(child.getParent().getId()))
@@ -53,6 +54,7 @@ public class OrganizationService {
                 org.getId(),
                 org.getName(),
                 parentName,
+                parentId, // 传递 parentId
                 org.getManager(),
                 (int) userCount,
                 children.isEmpty() ? null : children
@@ -72,12 +74,46 @@ public class OrganizationService {
 
     @Transactional
     public Optional<Organization> updateOrganization(Long id, OrganizationUpdateDTO updateDTO) {
-        return organizationRepository.findById(id).map(org -> {
-            org.setName(updateDTO.getName());
-            org.setManager(updateDTO.getManager());
-            // 注意：此示例不处理父级组织的更新，如果需要，可以在此添加逻辑
-            return organizationRepository.save(org);
-        });
+        Optional<Organization> orgOptional = organizationRepository.findById(id);
+        if (orgOptional.isEmpty()) {
+            return Optional.empty();
+        }
+
+        Organization org = orgOptional.get();
+        org.setName(updateDTO.getName());
+        org.setManager(updateDTO.getManager());
+
+        // 处理父级组织更新
+        Long parentId = updateDTO.getParentId();
+
+        // 检查循环依赖：不能将一个组织设置为自己的子孙节点
+        if (parentId != null && isCircularDependency(org, parentId)) {
+            // 在实际应用中，最好抛出一个自定义的业务异常
+            throw new IllegalStateException("无法将组织设置为自己的子孙节点。");
+        }
+
+        if (parentId == null) {
+            org.setParent(null);
+        } else {
+            organizationRepository.findById(parentId).ifPresent(org::setParent);
+        }
+
+        return Optional.of(organizationRepository.save(org));
+    }
+
+    /**
+     * 检查将一个组织（newParent）设置为当前组织（currentOrg）的父节点是否会产生循环依赖。
+     * @param currentOrg 当前正在被修改的组织。
+     * @param newParentId 新的父组织的ID。
+     * @return 如果会产生循环依赖，则返回 true。
+     */
+    private boolean isCircularDependency(Organization currentOrg, Long newParentId) {
+        if (currentOrg.getId().equals(newParentId)) {
+            return true; // 不能将自己设置为父节点
+        }
+        // 遍历所有子孙节点，检查 newParentId 是否是其中之一
+        return currentOrg.getChildren().stream()
+                .anyMatch(child -> isCircularDependency(child, newParentId));
     }
 
     @Transactional

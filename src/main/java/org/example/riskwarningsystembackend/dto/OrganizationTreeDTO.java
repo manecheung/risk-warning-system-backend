@@ -13,14 +13,16 @@ public class OrganizationTreeDTO {
     private Long id;
     private String name;
     private String parent;
+    private Long parentId; // 父组织的ID
     private String manager;
     private int userCount;
     private List<OrganizationTreeDTO> children;
 
-    public OrganizationTreeDTO(Long id, String name, String parent, String manager, int userCount, List<OrganizationTreeDTO> children) {
+    public OrganizationTreeDTO(Long id, String name, String parent, Long parentId, String manager, int userCount, List<OrganizationTreeDTO> children) {
         this.id = id;
         this.name = name;
         this.parent = parent;
+        this.parentId = parentId;
         this.manager = manager;
         this.userCount = userCount;
         this.children = children;
