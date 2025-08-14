@@ -91,6 +91,15 @@
             <artifactId>opencsv</artifactId>
             <version>5.12.0</version>
         </dependency>
+        <!-- Flyway Migration -->
+        <dependency>
+            <groupId>org.flywaydb</groupId>
+            <artifactId>flyway-core</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.flywaydb</groupId>
+            <artifactId>flyway-database-postgresql</artifactId>
+        </dependency>
     </dependencies>
 
     <build>
@@ -127,6 +136,20 @@
                             <version>0.2.0</version>
                         </path>
                     </annotationProcessorPaths>
+                </configuration>
+            </plugin>
+            <!-- Flyway Maven 插件：用于命令行 repair / migrate -->
+            <plugin>
+                <groupId>org.flywaydb</groupId>
+                <artifactId>flyway-maven-plugin</artifactId>
+                <version>11.7.2</version>
+                <configuration>
+                    <!-- 改成你的实际数据库 -->
+                    <url>jdbc:postgresql://localhost:5432/risk</url>
+                    <user>postgres</user>
+                    <password>Postgres#7556</password>
+                    <!-- 可选：默认 schema -->
+                    <schemas>public</schemas>
                 </configuration>
             </plugin>
         </plugins>
