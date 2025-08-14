@@ -246,7 +246,7 @@ public class ChainRiskService {
             }
         }
 
-        // Prepare response object as defined in gemini.md
+        // Prepare response object
         Map<String, Object> response = new HashMap<>();
         response.put("simulationId", simulation.getId());
         response.put("simulationName", simulation.getName());
