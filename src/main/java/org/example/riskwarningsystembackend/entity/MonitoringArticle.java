@@ -29,6 +29,8 @@ public class MonitoringArticle {
     @Column(name = "publish_date")
     private LocalDate date;
 
+    private String url;
+
     private String image;
 
     @ElementCollection
