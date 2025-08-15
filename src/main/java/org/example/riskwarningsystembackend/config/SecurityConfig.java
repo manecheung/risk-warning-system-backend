@@ -1,7 +1,6 @@
 package org.example.riskwarningsystembackend.config;
 
 import org.example.riskwarningsystembackend.security.JwtAuthenticationFilter;
-// 删除了对 UserDetailsService 的导入
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -43,20 +42,13 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(authz -> authz
-                        .requestMatchers(
-                                "/",
-                                "/index.html",
-                                "/favicon.ico",
-                                "/*.js",
-                                "/*.css",
-                                "/*.json",
-                                "/*.svg",
-                                "/*.png",
-                                "/assets/**",
-                                "/static/**"
-                        ).permitAll()
-                        .requestMatchers("/api/auth/**").permitAll()
-                        .anyRequest().authenticated()
+                        // 1. 明确放行认证和错误处理相关的API
+                        .requestMatchers("/api/auth/**", "/error").permitAll()
+                        // 2. 明确保护所有其他的API请求
+                        .requestMatchers("/api/**").authenticated()
+                        // 3. 其他所有请求（非/api/开头的）全部放行。
+                        //    这包括前端静态资源和所有前端路由。
+                        .anyRequest().permitAll()
                 );
 
         http.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
