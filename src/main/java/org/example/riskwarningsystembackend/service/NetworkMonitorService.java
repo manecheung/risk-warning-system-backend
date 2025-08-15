@@ -110,6 +110,9 @@ public class NetworkMonitorService {
                 Element articleContentElement = articleDoc.select("div.cc-article").first();
                 String articleContent = articleContentElement != null ? articleContentElement.html() : "";
 
+                // 提取第一张图片作为文章封面
+                String imageUrl = extractFirstImage(articleDoc);
+
                 // 5. 创建并保存实体
                 MonitoringArticle article = new MonitoringArticle();
                 article.setTitle(title);
@@ -118,6 +121,7 @@ public class NetworkMonitorService {
                 article.setType("news");
                 article.setAuthor("北极星风力发电网");
                 article.setContent(articleContent);
+                article.setImage(imageUrl); // 设置文章封面图片
 
                 // 处理关键字
                 if (!keywords.isEmpty()) {
@@ -140,6 +144,35 @@ public class NetworkMonitorService {
             logger.error("SSL配置错误", e);
         }
         logger.info("网络信息爬取任务执行完毕。");
+    }
+
+    /**
+     * 从文章中提取第一张图片的URL
+     * @param doc 文章页面Document对象
+     * @return 第一张图片的URL，如果没有找到则返回null
+     */
+    private String extractFirstImage(Document doc) {
+        try {
+            // 查找文章内容中的第一张图片
+            Element articleElement = doc.select("div.cc-article").first();
+            if (articleElement != null) {
+                Element firstImage = articleElement.select("img").first();
+                if (firstImage != null) {
+                    String imageUrl = firstImage.attr("src");
+                    // 如果是相对路径，转换为绝对路径
+                    if (imageUrl.startsWith("//")) {
+                        imageUrl = "https:" + imageUrl;
+                    } else if (imageUrl.startsWith("/")) {
+                        // 处理相对路径
+                        imageUrl = "https://news.bjx.com.cn" + imageUrl;
+                    }
+                    return imageUrl;
+                }
+            }
+        } catch (Exception e) {
+            logger.warn("提取文章图片时出错", e);
+        }
+        return null;
     }
 
     private SSLContext createTrustAllSslContext() throws NoSuchAlgorithmException, KeyManagementException {
