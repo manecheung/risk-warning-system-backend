@@ -1,8 +1,8 @@
 package org.example.riskwarningsystembackend.service;
 
-import org.example.riskwarningsystembackend.dto.OrganizationCreateDTO;
-import org.example.riskwarningsystembackend.dto.OrganizationTreeDTO;
-import org.example.riskwarningsystembackend.dto.OrganizationUpdateDTO;
+import org.example.riskwarningsystembackend.dto.organization.OrganizationCreateDTO;
+import org.example.riskwarningsystembackend.dto.organization.OrganizationTreeDTO;
+import org.example.riskwarningsystembackend.dto.organization.OrganizationUpdateDTO;
 import org.example.riskwarningsystembackend.entity.Organization;
 import org.example.riskwarningsystembackend.entity.User;
 import org.example.riskwarningsystembackend.repository.OrganizationRepository;
@@ -15,17 +15,32 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+/**
+ * 组织管理服务类，提供组织的增删改查及树形结构构建功能。
+ */
 @Service
 public class OrganizationService {
 
     private final OrganizationRepository organizationRepository;
     private final UserRepository userRepository;
 
+    /**
+     * 构造函数，注入组织和用户数据访问对象。
+     *
+     * @param organizationRepository 组织数据访问对象
+     * @param userRepository         用户数据访问对象
+     */
     public OrganizationService(OrganizationRepository organizationRepository, UserRepository userRepository) {
         this.organizationRepository = organizationRepository;
         this.userRepository = userRepository;
     }
 
+    /**
+     * 获取组织结构树。
+     * 通过查询所有组织及其负责人信息，构建完整的组织树结构。
+     *
+     * @return 组织树结构列表
+     */
     @Transactional(readOnly = true)
     public List<OrganizationTreeDTO> getOrganizationTree() {
         List<Organization> allOrgs = organizationRepository.findAllWithManager(); // 使用自定义查询
@@ -38,6 +53,13 @@ public class OrganizationService {
                 .collect(Collectors.toList());
     }
 
+    /**
+     * 递归构建单个组织节点及其子节点的树结构。
+     *
+     * @param org    当前组织节点
+     * @param allOrgs 所有组织列表
+     * @return 构建完成的组织树节点 DTO
+     */
     private OrganizationTreeDTO buildTree(Organization org, List<Organization> allOrgs) {
         long userCount = userRepository.countByOrganizationId(org.getId());
         Organization parent = org.getParent();
@@ -66,6 +88,12 @@ public class OrganizationService {
         return dto;
     }
 
+    /**
+     * 创建新的组织。
+     *
+     * @param createDTO 组织创建传输对象，包含名称、父级 ID 和负责人 ID
+     * @return 创建成功的组织实体
+     */
     @Transactional
     public Organization createOrganization(OrganizationCreateDTO createDTO) {
         Organization org = new Organization();
@@ -82,6 +110,13 @@ public class OrganizationService {
         return organizationRepository.save(org);
     }
 
+    /**
+     * 更新指定 ID 的组织信息。
+     *
+     * @param id       要更新的组织 ID
+     * @param updateDTO 组织更新传输对象，包含名称、父级 ID 和负责人 ID
+     * @return 更新后的组织实体，如果不存在则返回空 Optional
+     */
     @Transactional
     public Optional<Organization> updateOrganization(Long id, OrganizationUpdateDTO updateDTO) {
         return organizationRepository.findById(id).map(org -> {
@@ -109,6 +144,13 @@ public class OrganizationService {
         });
     }
 
+    /**
+     * 检查是否存在循环依赖关系（即不能将一个组织设置为其子孙节点）。
+     *
+     * @param currentOrg 当前组织
+     * @param newParentId 新的父级组织 ID
+     * @return 如果存在循环依赖返回 true，否则返回 false
+     */
     private boolean isCircularDependency(Organization currentOrg, Long newParentId) {
         if (currentOrg.getId().equals(newParentId)) {
             return true;
@@ -124,6 +166,12 @@ public class OrganizationService {
         return false;
     }
 
+    /**
+     * 删除指定 ID 的组织。
+     * 删除前会检查是否存在子组织或用户，若存在则抛出异常。
+     *
+     * @param id 要删除的组织 ID
+     */
     @Transactional
     public void deleteOrganization(Long id) {
         if (organizationRepository.existsById(id)) {

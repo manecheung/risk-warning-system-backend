@@ -1,11 +1,14 @@
 package org.example.riskwarningsystembackend.service;
 
 import org.example.riskwarningsystembackend.dto.*;
+import org.example.riskwarningsystembackend.dto.dashboard.RiskMapDTO;
+import org.example.riskwarningsystembackend.dto.dashboard.*;
+import org.example.riskwarningsystembackend.dto.supplychain.SupplyChainRiskDTO;
 import org.example.riskwarningsystembackend.entity.CompanyInfo;
 import org.example.riskwarningsystembackend.entity.CompanyRelation;
-import org.example.riskwarningsystembackend.repository.CompanyInfoRepository;
-import org.example.riskwarningsystembackend.repository.CompanyRelationRepository;
-import org.example.riskwarningsystembackend.repository.ProductNodeRepository;
+import org.example.riskwarningsystembackend.repository.company.CompanyInfoRepository;
+import org.example.riskwarningsystembackend.repository.company.CompanyRelationRepository;
+import org.example.riskwarningsystembackend.repository.product.ProductNodeRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
@@ -15,6 +18,9 @@ import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+/**
+ * 风险预警系统仪表盘服务类，提供各类风险数据统计与分析功能。
+ */
 @Service
 public class DashboardService {
 
@@ -22,6 +28,13 @@ public class DashboardService {
     private final ProductNodeRepository productNodeRepository;
     private final CompanyRelationRepository companyRelationRepository;
 
+    /**
+     * 构造函数，注入所需的 Repository 依赖。
+     *
+     * @param companyInfoRepository 公司信息数据访问接口
+     * @param productNodeRepository 产品节点数据访问接口
+     * @param companyRelationRepository 公司关系数据访问接口
+     */
     public DashboardService(CompanyInfoRepository companyInfoRepository,
                             ProductNodeRepository productNodeRepository,
                             CompanyRelationRepository companyRelationRepository) {
@@ -30,6 +43,11 @@ public class DashboardService {
         this.companyRelationRepository = companyRelationRepository;
     }
 
+    /**
+     * 获取关键指标数据，包括涵盖行业数、企业数和产品数。
+     *
+     * @return 关键指标列表，每个元素包含指标名称、数值和图标路径
+     */
     public List<KeyMetricDTO> getKeyMetrics() {
         long companyCount = companyInfoRepository.count();
         long productCount = productNodeRepository.count();
@@ -42,6 +60,11 @@ public class DashboardService {
         );
     }
 
+    /**
+     * 获取企业法律纠纷数量的风险分布情况。
+     *
+     * @return 风险分布列表，包含高、中、低风险企业的数量及标签
+     */
     public List<RiskDistributionDTO> getRiskDistribution() {
         long highRiskCount = companyInfoRepository.countByLegalDisputeCountGreaterThanEqual(500);
         long mediumRiskCount = companyInfoRepository.countByLegalDisputeCountBetween(101, 499);
@@ -54,6 +77,11 @@ public class DashboardService {
         );
     }
 
+    /**
+     * 获取各行业的健康评分，基于平均法律纠纷数量计算。
+     *
+     * @return 行业健康评分数据对象，包含行业名称列表和对应的评分列表
+     */
     public IndustryHealthDTO getIndustryHealth() {
         List<String> categories = companyInfoRepository.findTop15IndustriesByCompanyCount();
         List<Integer> values = new ArrayList<>();
@@ -68,6 +96,11 @@ public class DashboardService {
         return new IndustryHealthDTO(categories, values);
     }
 
+    /**
+     * 获取供应链风险评估数据，包括多个维度的评分。
+     *
+     * @return 供应链风险数据传输对象，包含指标列表和具体行业链数据
+     */
     public SupplyChainRiskDTO getSupplyChainRisk() {
         List<SupplyChainRiskDTO.Indicator> indicators = Arrays.asList(
                 new SupplyChainRiskDTO.Indicator("技术风险", 100),
@@ -94,6 +127,12 @@ public class DashboardService {
         return new SupplyChainRiskDTO(indicators, data);
     }
 
+    /**
+     * 分页获取高风险企业分析数据。
+     *
+     * @param pageRequest 分页请求参数
+     * @return 包含风险分析数据的分页响应对象
+     */
     public PaginatedResponseDTO<RiskAnalysisDTO> getRiskAnalysis(PageRequest pageRequest) {
         Page<CompanyInfo> highRiskCompanies = companyInfoRepository.findHighRiskCompanies(pageRequest);
         Page<RiskAnalysisDTO> riskAnalysisDtoPage = highRiskCompanies.map(company -> {
@@ -123,6 +162,11 @@ public class DashboardService {
         return new PaginatedResponseDTO<>(riskAnalysisDtoPage);
     }
 
+    /**
+     * 获取企业地理分布风险地图数据。
+     *
+     * @return 风险地图数据列表，每个元素包含企业名称、坐标和风险等级
+     */
     public List<RiskMapDTO> getRiskMap() {
         List<CompanyInfo> companies = companyInfoRepository.findAllWithCoordinates();
         return companies.stream()
@@ -143,6 +187,13 @@ public class DashboardService {
                 }).collect(Collectors.toList());
     }
 
+    /**
+     * 根据公司ID或关键词获取企业知识图谱数据。
+     *
+     * @param companyId 指定的公司ID（可为空）
+     * @param keyword 搜索关键词（可为空）
+     * @return 企业知识图谱数据对象，包含节点和边信息
+     */
     public CompanyGraphDTO getCompanyKnowledgeGraph(Long companyId, String keyword) {
         if (companyId != null) {
             return getSubgraphForCompany(companyId);
@@ -153,6 +204,11 @@ public class DashboardService {
         }
     }
 
+    /**
+     * 构建初始知识图谱数据。
+     *
+     * @return 初始图谱数据对象
+     */
     private CompanyGraphDTO getInitialGraph() {
         PageRequest pageRequest = PageRequest.of(0, 50);
         Page<CompanyInfo> companyPage = companyInfoRepository.findAll(pageRequest);
@@ -174,6 +230,12 @@ public class DashboardService {
         return buildGraphDTO(allCompanies, relations);
     }
 
+    /**
+     * 根据指定公司ID构建子图谱数据。
+     *
+     * @param companyId 指定公司的ID
+     * @return 子图谱数据对象
+     */
     private CompanyGraphDTO getSubgraphForCompany(Long companyId) {
         if (!companyInfoRepository.existsById(companyId)) {
             return new CompanyGraphDTO(Collections.emptyList(), Collections.emptyList());
@@ -190,6 +252,12 @@ public class DashboardService {
         return buildGraphDTO(companies, relations);
     }
 
+    /**
+     * 根据关键词搜索匹配的企业并构建图谱数据。
+     *
+     * @param keyword 搜索关键词
+     * @return 匹配结果的图谱数据对象
+     */
     private CompanyGraphDTO getGraphBySearch(String keyword) {
         List<CompanyInfo> matchedCompanies = companyInfoRepository.findByNameContainingIgnoreCase(keyword);
         if (matchedCompanies.isEmpty()) {
@@ -209,6 +277,13 @@ public class DashboardService {
         return buildGraphDTO(allCompanies, relations);
     }
 
+    /**
+     * 构建图谱数据传输对象。
+     *
+     * @param companies 公司信息列表
+     * @param relations 公司关系列表
+     * @return 图谱数据对象，包含节点和边信息
+     */
     private CompanyGraphDTO buildGraphDTO(List<CompanyInfo> companies, List<CompanyRelation> relations) {
         List<CompanyGraphDTO.Node> nodes = companies.stream()
                 .map(company -> new CompanyGraphDTO.Node(
@@ -230,3 +305,4 @@ public class DashboardService {
         return new CompanyGraphDTO(nodes, edges);
     }
 }
+

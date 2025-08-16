@@ -6,6 +6,11 @@ import org.springframework.data.domain.Page;
 
 import java.util.List;
 
+/**
+ * 分页响应数据传输对象
+ * 用于封装分页查询的结果信息
+ * @param <T> 泛型类型，表示分页记录的数据类型
+ */
 @Data
 @AllArgsConstructor
 public class PaginatedResponseDTO<T> {
@@ -17,7 +22,12 @@ public class PaginatedResponseDTO<T> {
     private boolean hasNextPage; // 判断是否有下一页
     private List<T> records; // 当前页的记录
 
+    /**
+     * 构造函数，根据Spring Data的Page对象创建分页响应DTO
+     * @param page Spring Data的Page对象，包含分页数据
+     */
     public PaginatedResponseDTO(Page<T> page) {
+        // 从Page对象中提取分页信息并赋值给对应字段
         this.page = page.getNumber() + 1; // 获取当前页码
         this.pageSize = page.getSize(); // 获取每页记录数
         this.totalRecords = page.getTotalElements(); // 获取总记录数
@@ -27,3 +37,4 @@ public class PaginatedResponseDTO<T> {
         this.records = page.getContent(); // 获取当前页的记录
     }
 }
+

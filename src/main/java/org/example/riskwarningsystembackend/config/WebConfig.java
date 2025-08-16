@@ -5,50 +5,30 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
+/**
+ * Web配置类，用于配置跨域资源共享(CORS)等相关设置
+ */
 @Configuration
 public class WebConfig implements WebMvcConfigurer {
 
+    /**
+     * 允许跨域访问的源站地址数组，从配置文件中读取
+     */
     @Value("${cors.allowed-origins}")
     private String[] allowedOrigins;
 
+    /**
+     * 配置跨域资源共享(CORS)映射规则
+     *
+     * @param registry CORS注册器，用于添加跨域配置映射
+     */
     @Override
     public void addCorsMappings(CorsRegistry registry) {
+        // 配置/api/**路径下的接口支持跨域访问，允许指定源站、HTTP方法和请求头
         registry.addMapping("/api/**")
                 .allowedOrigins(allowedOrigins)
                 .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
                 .allowedHeaders("*")
                 .allowCredentials(true);
     }
-//
-//    /**
-//     * 配置静态资源处理器。
-//     * 告诉 Spring Boot 从哪里查找前端的静态文件（HTML, CSS, JS 等）。
-//     * 在 Dockerfile 中，您将 vue-risk-dashboard/dist 复制到了 /app/static/。
-//     * 因此，这里需要指向相对于 JAR 包运行目录的 'static/' 文件夹。
-//     */
-//    @Override
-//    public void addResourceHandlers(ResourceHandlerRegistry registry) {
-//        registry.addResourceHandler("/**") // 匹配所有请求路径
-//                .addResourceLocations("file:./static/"); // 指向 JAR 包同级目录下的 'static' 文件夹
-//    }
-//
-//    /**
-//     * 配置视图控制器，用于处理单页应用的路由回退（History Mode）。
-//     * 当浏览器直接访问非根路径（如 /supply-chain）时，Spring Boot 会将请求转发到根路径，
-//     * 从而加载 index.html，然后由前端路由接管。
-//     */
-//    @Override
-//    public void addViewControllers(ViewControllerRegistry registry) {
-//        // 处理单层路径，例如 /supply-chain
-//        registry.addViewController("/{spring:\\w+}")
-//                .setViewName("forward:/");
-//
-//        // 处理多层嵌套路径，例如 /supply-chain/details
-//        registry.addViewController("/**/{spring:\\w+}")
-//                .setViewName("forward:/");
-//
-//        // 处理带有文件扩展名的路径，例如 /somefile.html (如果它不是真正的静态文件)
-//        registry.addViewController("/{spring:\\w+}.{spring:\\w+}")
-//                .setViewName("forward:/");
-//    }
 }

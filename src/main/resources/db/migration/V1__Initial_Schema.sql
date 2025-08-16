@@ -1,5 +1,6 @@
--- V1__Initial_Schema.sql
--- This script creates the initial database schema for the risk warning system.
+-- V1__Initial_Schema.sql (Unified & Corrected)
+-- This script creates the complete initial database schema for the risk warning system.
+-- It includes simulation management tables from the start to ensure correct dependency order.
 
 -- =================================================================
 -- Table for Company Information
@@ -105,7 +106,6 @@ CREATE TABLE users
     organization_id BIGINT
 );
 
--- Add constraints after table creation to handle circular dependencies
 ALTER TABLE organizations
     ADD CONSTRAINT fk_org_parent FOREIGN KEY (parent_id) REFERENCES organizations (id),
     ADD CONSTRAINT fk_org_manager FOREIGN KEY (manager_id) REFERENCES users (id);
@@ -150,27 +150,12 @@ CREATE TABLE role_permissions
 );
 
 -- =================================================================
--- Table for Chain Risk Simulations
--- =================================================================
-CREATE TABLE chain_risk_simulations
-(
-    id          BIGSERIAL PRIMARY KEY,
-    name        VARCHAR(255) NOT NULL,
-    description VARCHAR(1024),
-    creator     VARCHAR(255),
-    create_time TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    nodes       TEXT         NOT NULL,
-    edges       TEXT         NOT NULL,
-    risk_path   TEXT
-);
-
--- =================================================================
 -- Table for Monitoring Articles
 -- =================================================================
 CREATE TABLE monitoring_articles
 (
     id              BIGSERIAL PRIMARY KEY,
-    type            VARCHAR(50)  NOT NULL, -- 'news' or 'risk'
+    type            VARCHAR(50)  NOT NULL,
     title           VARCHAR(512) NOT NULL,
     author          VARCHAR(255),
     publish_date    DATE,
@@ -183,7 +168,6 @@ CREATE TABLE monitoring_articles
     content         TEXT         NOT NULL
 );
 
--- Create a table for article tags, as defined in the entity.
 CREATE TABLE monitoring_article_tags
 (
     article_id BIGINT NOT NULL,
@@ -192,59 +176,104 @@ CREATE TABLE monitoring_article_tags
 );
 
 -- =================================================================
--- Mock Data for Monitoring Articles
+-- Tables for Simulation Management & Data
 -- =================================================================
-INSERT INTO monitoring_articles (id, type, title, author, publish_date, image, content, risk_source, notice,
-                                 related_company, related_product)
-VALUES (1, 'news',
-        '这是一个非常非常长的标题，用于专门测试当标题内容超出容器宽度时，是否能够正确地显示横向滚动条而不是简单地截断文本或者破坏布局。',
-        '北极星风力发电网', '2024-11-12', '/风电.svg', '这是文章1的内容。这是一个测试内容，用于确保长标题的显示效果。',
-        NULL, NULL, NULL, NULL),
-       (2, 'news', '风电“抢装潮”退潮！华东勘测设计院发布5份行政处罚决定书', '北极星风力发电网', '2024-11-12',
-        '/法规.svg', '这是文章2的内容。详细描述了“抢装潮”退潮后的市场情况和相关处罚决定。', NULL, NULL, NULL, NULL),
-       (3, 'news', '新能源汽车下乡政策再加码，充电桩建设成关键', '第一财经', '2024-11-11', '/法规.svg',
-        '这是文章3的内容。分析了新能源汽车下乡政策的最新动态和充电桩建设的重要性。', NULL, NULL, NULL, NULL),
-       (4, 'risk', '漳州帆船配舾工程有限公司员工坠亡', '北极星风力发电网', '2024-11-12', '/风险.svg',
-        '<h4>事故背景</h4><p>近期，安全生产监督管理部门发布了一则关于高处作业安全的紧急通报，通报中披露了此次不幸的事故。据了解，涉事员工在进行高空焊接准备工作时，未按规定佩戴安全防护设备，且现场缺乏有效的安全监护措施，最终导致了悲剧的发生。</p><p>该事件不仅给遇难者家属带来了巨大的悲痛，也为相关企业敲响了安全生产的警钟。监管部门已责令该公司全面停产整顿，并对相关责任人展开调查。</p>',
-        '人员坠落, 抢救无效死亡',
-        '《通知》显示，2024年9月4日3时10分许，在漳浦县六鳌镇某船厂一新能源装备制造有限公司风电装备车间，漳州帆船配舾工程有限公司的1名员工在管桩机上进行绕管焊接作业准备中发生坠落，经抢救无效死亡。事故具体原因仍在调查中。',
-        '漳州帆船配舾工程有限公司', '船舵总筒'),
-       (5, 'risk',
-        '某上市公司财务造假被证监会立案调查，股价连续跌停引发市场恐慌，这是一个为了测试而设置的非常长的风险新闻标题',
-        '证券时报', '2024-11-10', '/风险.svg', '这是文章5的内容。关于某上市公司财务造假的详细报道和市场反应。',
-        '财务造假', '证监会已正式立案调查，相关细节待后续公布。', '某上市公司', '该公司股票'),
-       (6, 'risk', '供应链中断，某手机厂商新款发布或将延迟', '供应链前沿', '2024-11-09', '/风险.svg',
-        '这是文章6的内容。由于关键组件供应中断，某知名手机厂商的新款发布计划可能受到影响。', '供应链中断',
-        '官方尚未发布正式延迟通知，但内部消息人士透露了这一可能性。', '某手机厂商', '新款智能手机'),
-       (7, 'news', '光伏产业迎来新一轮技术迭代，N型电池成市场主流', '光伏资讯', '2024-11-08', '/法规.svg',
-        '这是文章7的内容。探讨了光伏产业的技术发展趋势，特别是N型电池的市场前景。', NULL, NULL, NULL, NULL),
-       (8, 'news', '“东数西算”工程全面启动，数据中心建设提速', '人民邮电报', '2024-11-07', '/法规.svg',
-        '这是文章8的内容。报道了“东数西算”工程的启动及其对数据中心建设的推动作用。', NULL, NULL, NULL, NULL),
-       (9, 'risk', '数据安全漏洞曝光，知名社交平台用户隐私面临威胁', '网络安全观察', '2024-11-06', '/风险.svg',
-        '这是文章9的内容。一个严重的数据安全漏洞被发现，可能影响数百万用户的隐私数据。', '数据安全漏洞',
-        '该社交平台已承认漏洞存在，并正在紧急修复中。', '知名社交平台', '用户隐私数据'),
-       (10, 'risk', '环保审查趋严，某化工企业因排污超标被责令停产整顿', '环保在线', '2024-11-05', '/风险.svg',
-        '这是文章10的内容。在最新的环保审查中，某化工企业因严重超标排放污染物被要求立即停产整顿。', '排污超标',
-        '环保部门已发出正式通知，并将进行进一步调查。', '某化工企业', '化工原料');
 
-INSERT INTO monitoring_article_tags (article_id, tag)
-VALUES (1, '运维'),
-       (1, '人才'),
-       (2, '法规'),
-       (2, '处罚决定书'),
-       (3, '政策'),
-       (3, '汽车'),
-       (4, '事故'),
-       (4, '安全'),
-       (5, '财务风险'),
-       (5, '调查'),
-       (6, '供应链'),
-       (6, '中断'),
-       (7, '技术'),
-       (7, '光伏'),
-       (8, '新基建'),
-       (8, '数据中心'),
-       (9, '数据安全'),
-       (9, '隐私泄露'),
-       (10, '环保'),
-       (10, '监管');
+-- Create the 'simulations' table FIRST, as other tables depend on it.
+CREATE TABLE simulations
+(
+    id          BIGSERIAL PRIMARY KEY,
+    name        VARCHAR(255) NOT NULL,
+    description TEXT,
+    created_at  TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Table for KRI (Key Risk Indicators)
+CREATE TABLE kri
+(
+    id         BIGSERIAL PRIMARY KEY,
+    kz         DOUBLE PRECISION,
+    kc1_k      DOUBLE PRECISION, kc1_score  DOUBLE PRECISION,
+    kc2_k      DOUBLE PRECISION, kc2_score  DOUBLE PRECISION,
+    kc3_k      DOUBLE PRECISION, kc3_score  DOUBLE PRECISION,
+    kc4_k      DOUBLE PRECISION, kc4_score  DOUBLE PRECISION,
+    kc5_k      DOUBLE PRECISION, kc5_score  DOUBLE PRECISION,
+    kc6_k      DOUBLE PRECISION, kc6_score  DOUBLE PRECISION,
+    kc7_k      DOUBLE PRECISION, kc7_score  DOUBLE PRECISION,
+    kc8_k      DOUBLE PRECISION, kc8_score  DOUBLE PRECISION,
+    kc9_k      DOUBLE PRECISION, kc9_score  DOUBLE PRECISION,
+    kc10_k     DOUBLE PRECISION, kc10_score DOUBLE PRECISION,
+    kc11_k     DOUBLE PRECISION, kc11_score DOUBLE PRECISION,
+    kf         DOUBLE PRECISION,
+    kc12_k     DOUBLE PRECISION, kc12_score DOUBLE PRECISION,
+    kc13_k     DOUBLE PRECISION, kc13_score DOUBLE PRECISION,
+    kri_score  DOUBLE PRECISION
+);
+
+-- Table for Company Simulation Data, now with a direct foreign key to 'simulations'.
+CREATE TABLE company_simulation_data
+(
+    id              BIGSERIAL PRIMARY KEY,
+    simulation_id   BIGINT,
+    company_id      INTEGER,
+    name            VARCHAR(255),
+    time            INTEGER,
+    state           INTEGER,
+    inner_factor    DOUBLE PRECISION,
+    compete_factor  DOUBLE PRECISION,
+    material_factor DOUBLE PRECISION,
+    kri_id          BIGINT,
+    CONSTRAINT fk_simulation FOREIGN KEY (simulation_id) REFERENCES simulations (id) ON DELETE CASCADE,
+    CONSTRAINT fk_company_simulation_kri FOREIGN KEY (kri_id) REFERENCES kri (id) ON DELETE CASCADE
+);
+
+-- Tables for KCI W values (one for each KC)
+CREATE TABLE kri_kc1_w (kri_id BIGINT NOT NULL, value DOUBLE PRECISION, CONSTRAINT fk_kri_kc1_w FOREIGN KEY (kri_id) REFERENCES kri (id) ON DELETE CASCADE);
+CREATE TABLE kri_kc2_w (kri_id BIGINT NOT NULL, value DOUBLE PRECISION, CONSTRAINT fk_kri_kc2_w FOREIGN KEY (kri_id) REFERENCES kri (id) ON DELETE CASCADE);
+CREATE TABLE kri_kc3_w (kri_id BIGINT NOT NULL, value DOUBLE PRECISION, CONSTRAINT fk_kri_kc3_w FOREIGN KEY (kri_id) REFERENCES kri (id) ON DELETE CASCADE);
+CREATE TABLE kri_kc4_w (kri_id BIGINT NOT NULL, value DOUBLE PRECISION, CONSTRAINT fk_kri_kc4_w FOREIGN KEY (kri_id) REFERENCES kri (id) ON DELETE CASCADE);
+CREATE TABLE kri_kc5_w (kri_id BIGINT NOT NULL, value DOUBLE PRECISION, CONSTRAINT fk_kri_kc5_w FOREIGN KEY (kri_id) REFERENCES kri (id) ON DELETE CASCADE);
+CREATE TABLE kri_kc6_w (kri_id BIGINT NOT NULL, value DOUBLE PRECISION, CONSTRAINT fk_kri_kc6_w FOREIGN KEY (kri_id) REFERENCES kri (id) ON DELETE CASCADE);
+CREATE TABLE kri_kc7_w (kri_id BIGINT NOT NULL, value DOUBLE PRECISION, CONSTRAINT fk_kri_kc7_w FOREIGN KEY (kri_id) REFERENCES kri (id) ON DELETE CASCADE);
+CREATE TABLE kri_kc8_w (kri_id BIGINT NOT NULL, value DOUBLE PRECISION, CONSTRAINT fk_kri_kc8_w FOREIGN KEY (kri_id) REFERENCES kri (id) ON DELETE CASCADE);
+CREATE TABLE kri_kc9_w (kri_id BIGINT NOT NULL, value DOUBLE PRECISION, CONSTRAINT fk_kri_kc9_w FOREIGN KEY (kri_id) REFERENCES kri (id) ON DELETE CASCADE);
+CREATE TABLE kri_kc10_w (kri_id BIGINT NOT NULL, value DOUBLE PRECISION, CONSTRAINT fk_kri_kc10_w FOREIGN KEY (kri_id) REFERENCES kri (id) ON DELETE CASCADE);
+CREATE TABLE kri_kc11_w (kri_id BIGINT NOT NULL, value DOUBLE PRECISION, CONSTRAINT fk_kri_kc11_w FOREIGN KEY (kri_id) REFERENCES kri (id) ON DELETE CASCADE);
+CREATE TABLE kri_kc12_w (kri_id BIGINT NOT NULL, value DOUBLE PRECISION, CONSTRAINT fk_kri_kc12_w FOREIGN KEY (kri_id) REFERENCES kri (id) ON DELETE CASCADE);
+CREATE TABLE kri_kc13_w (kri_id BIGINT NOT NULL, value DOUBLE PRECISION, CONSTRAINT fk_kri_kc13_w FOREIGN KEY (kri_id) REFERENCES kri (id) ON DELETE CASCADE);
+
+-- Table for Material Data, linked to company_simulation_data
+CREATE TABLE material_data
+(
+    id    BIGSERIAL PRIMARY KEY,
+    simulation_id BIGINT, -- This is the FOREIGN KEY to company_simulation_data.id
+    name  VARCHAR(255),
+    w     DOUBLE PRECISION,
+    n_max DOUBLE PRECISION,
+    CONSTRAINT fk_material_data_simulation FOREIGN KEY (simulation_id) REFERENCES company_simulation_data (id) ON DELETE CASCADE
+);
+
+CREATE TABLE material_data_suppliers (material_data_id BIGINT NOT NULL, supplier_id INTEGER, CONSTRAINT fk_material_data_suppliers FOREIGN KEY (material_data_id) REFERENCES material_data (id) ON DELETE CASCADE);
+
+-- Table for Product Data, linked to company_simulation_data
+CREATE TABLE product_data
+(
+    id   BIGSERIAL PRIMARY KEY,
+    simulation_id BIGINT, -- This is the FOREIGN KEY to company_simulation_data.id
+    name VARCHAR(255),
+    w    DOUBLE PRECISION,
+    nums DOUBLE PRECISION,
+    f    DOUBLE PRECISION,
+    CONSTRAINT fk_product_data_simulation FOREIGN KEY (simulation_id) REFERENCES company_simulation_data (id) ON DELETE CASCADE
+);
+
+CREATE TABLE product_data_competitors (product_data_id BIGINT NOT NULL, competitor_id INTEGER, CONSTRAINT fk_product_data_competitors FOREIGN KEY (product_data_id) REFERENCES product_data (id) ON DELETE CASCADE);
+CREATE TABLE product_data_customers (product_data_id BIGINT NOT NULL, customer_id VARCHAR(255), value DOUBLE PRECISION, CONSTRAINT fk_product_data_customers FOREIGN KEY (product_data_id) REFERENCES product_data (id) ON DELETE CASCADE);
+
+-- Table for Company Simulation List X
+CREATE TABLE company_simulation_list_x
+(
+    simulation_id BIGINT NOT NULL,
+    value         DOUBLE PRECISION,
+    CONSTRAINT fk_company_simulation_list_x FOREIGN KEY (simulation_id) REFERENCES company_simulation_data (id) ON DELETE CASCADE
+);

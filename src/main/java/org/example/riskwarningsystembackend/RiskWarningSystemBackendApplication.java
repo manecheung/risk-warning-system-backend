@@ -12,4 +12,5 @@ public class RiskWarningSystemBackendApplication {
         SpringApplication.run(RiskWarningSystemBackendApplication.class, args);
     }
 
-}
+    }
+

@@ -24,6 +24,15 @@ import org.springframework.web.bind.annotation.ResponseBody;
 @Controller
 public class SpaErrorController implements ErrorController {
 
+    /**
+     * 处理所有未被映射的请求错误。
+     * <p>
+     * 如果是 404 错误，则转发到前端入口页面 index.html，以支持 SPA 路由；
+     * 否则构建统一格式的 JSON 错误响应。
+     *
+     * @param request HTTP 请求对象，包含错误相关信息
+     * @return 若为 404 则返回视图转发字符串，否则返回 ResponseEntity 包含错误信息
+     */
     @RequestMapping("/error")
     public Object handleError(HttpServletRequest request) {
         // 从请求属性中获取状态码
@@ -46,6 +55,7 @@ public class SpaErrorController implements ErrorController {
 
     /**
      * 构建一个标准的 JSON 错误响应。
+     *
      * @param statusCode HTTP 状态码
      * @param request    HTTP 请求对象，用于获取详细错误信息
      * @return 包含 RestResult 和 HTTP 状态的 ResponseEntity 对象

@@ -3,6 +3,10 @@ package org.example.riskwarningsystembackend.entity;
 import jakarta.persistence.*;
 import lombok.Data;
 
+/**
+ * CompanyInfo 实体类，用于映射数据库中的 company_info 表。
+ * 该类表示一个公司的基本信息、产品信息、财务数据、风险评级以及地理位置等。
+ */
 @Entity
 @Data
 @Table(name = "company_info")

@@ -2,9 +2,9 @@ package org.example.riskwarningsystembackend.service;
 
 import jakarta.persistence.criteria.Predicate;
 import org.example.riskwarningsystembackend.dto.PaginatedResponseDTO;
-import org.example.riskwarningsystembackend.dto.UserCreateDTO;
-import org.example.riskwarningsystembackend.dto.UserDTO;
-import org.example.riskwarningsystembackend.dto.UserUpdateDTO;
+import org.example.riskwarningsystembackend.dto.user.UserCreateDTO;
+import org.example.riskwarningsystembackend.dto.user.UserDTO;
+import org.example.riskwarningsystembackend.dto.user.UserUpdateDTO;
 import org.example.riskwarningsystembackend.entity.Organization;
 import org.example.riskwarningsystembackend.entity.Role;
 import org.example.riskwarningsystembackend.entity.User;
