@@ -1,7 +1,7 @@
 package org.example.riskwarningsystembackend.service;
 
 import jakarta.annotation.PostConstruct;
-import org.example.riskwarningsystembackend.dto.RiskIdentificationResult;
+import org.example.riskwarningsystembackend.dto.monitoring.MonitorRiskIdentificationResult;
 import org.example.riskwarningsystembackend.entity.CompanyInfo;
 import org.example.riskwarningsystembackend.entity.ProductNode;
 import org.example.riskwarningsystembackend.repository.company.CompanyInfoRepository;
@@ -31,9 +31,9 @@ import java.util.stream.Collectors;
  * 负责从文本内容中识别风险关键词和关联的实体（公司、产品).
  */
 @Service
-public class RiskIdentificationService {
+public class MonitorRiskIdentificationService {
 
-    private static final Logger logger = LoggerFactory.getLogger(RiskIdentificationService.class);
+    private static final Logger logger = LoggerFactory.getLogger(MonitorRiskIdentificationService.class);
     private static final String KEYWORDS_FILE_PATH = "data/模糊匹配关键词.txt";
 
     private final CompanyInfoRepository companyInfoRepository;
@@ -44,7 +44,7 @@ public class RiskIdentificationService {
     private Map<String, ProductNode> productMap = Collections.emptyMap();
 
     @Autowired
-    public RiskIdentificationService(CompanyInfoRepository companyInfoRepository, ProductNodeRepository productNodeRepository) {
+    public MonitorRiskIdentificationService(CompanyInfoRepository companyInfoRepository, ProductNodeRepository productNodeRepository) {
         this.companyInfoRepository = companyInfoRepository;
         this.productNodeRepository = productNodeRepository;
     }
@@ -104,8 +104,8 @@ public class RiskIdentificationService {
      * @param textContent 新闻文章的内容.
      * @return 风险识别结果 DTO.
      */
-    public RiskIdentificationResult identifyRisk(String textContent) {
-        RiskIdentificationResult result = new RiskIdentificationResult();
+    public MonitorRiskIdentificationResult identifyRisk(String textContent) {
+        MonitorRiskIdentificationResult result = new MonitorRiskIdentificationResult();
         result.setRisk(false);
 
         if (textContent == null || textContent.isEmpty()) {

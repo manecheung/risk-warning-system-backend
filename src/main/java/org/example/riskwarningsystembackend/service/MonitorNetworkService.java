@@ -1,7 +1,7 @@
 package org.example.riskwarningsystembackend.service;
 
 import jakarta.annotation.PostConstruct;
-import org.example.riskwarningsystembackend.dto.RiskIdentificationResult;
+import org.example.riskwarningsystembackend.dto.monitoring.MonitorRiskIdentificationResult;
 import org.example.riskwarningsystembackend.entity.CompanyInfo;
 import org.example.riskwarningsystembackend.entity.MonitoringArticle;
 import org.example.riskwarningsystembackend.entity.ProductNode;
@@ -40,17 +40,17 @@ public class MonitorNetworkService {
     private static final Logger logger = LoggerFactory.getLogger(MonitorNetworkService.class);
     private static final String BASE_URL = "https://fd.bjx.com.cn/yw/";
     private final MonitoringArticleRepository monitoringArticleRepository;
-    private final RiskIdentificationService riskIdentificationService;
+    private final MonitorRiskIdentificationService monitorRiskIdentificationService;
 
     /**
      * 构造函数，注入所需的服务实例。
      *
      * @param monitoringArticleRepository 用于操作 MonitoringArticle 实体的数据访问层组件
-     * @param riskIdentificationService   用于进行风险识别的服务
+     * @param monitorRiskIdentificationService   用于进行风险识别的服务
      */
-    public MonitorNetworkService(MonitoringArticleRepository monitoringArticleRepository, RiskIdentificationService riskIdentificationService) {
+    public MonitorNetworkService(MonitoringArticleRepository monitoringArticleRepository, MonitorRiskIdentificationService monitorRiskIdentificationService) {
         this.monitoringArticleRepository = monitoringArticleRepository;
-        this.riskIdentificationService = riskIdentificationService;
+        this.monitorRiskIdentificationService = monitorRiskIdentificationService;
     }
 
     /**
@@ -133,7 +133,7 @@ public class MonitorNetworkService {
                 article.setImage(imageUrl);
 
                 // 6. 调用风险识别服务
-                RiskIdentificationResult riskResult = riskIdentificationService.identifyRisk(articleContentText);
+                MonitorRiskIdentificationResult riskResult = monitorRiskIdentificationService.identifyRisk(articleContentText);
 
                 if (riskResult.isRisk()) {
                     logger.info("发现风险文章: {}", title);

@@ -1,4 +1,4 @@
-package org.example.riskwarningsystembackend.dto;
+package org.example.riskwarningsystembackend.dto.monitoring;
 
 import lombok.Data;
 import org.example.riskwarningsystembackend.entity.CompanyInfo;
@@ -11,7 +11,7 @@ import java.util.Set;
  * 用于封装单次新闻内容分析后的结果.
  */
 @Data
-public class RiskIdentificationResult {
+public class MonitorRiskIdentificationResult {
 
     /**
      * 是否判定为风险新闻.
