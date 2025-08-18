@@ -8,6 +8,7 @@ import org.example.riskwarningsystembackend.repository.MonitoringArticleReposito
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -39,7 +40,7 @@ public class MonitoringService {
      * @return 分页结果，包含符合条件的文章列表
      */
     public Page<MonitoringArticle> getArticles(int page, int pageSize, String type, String keyword) {
-        Pageable pageable = PageRequest.of(page - 1, pageSize);
+        Pageable pageable = PageRequest.of(page - 1, pageSize, Sort.by("date").descending());
 
         Specification<MonitoringArticle> spec = (root, query, criteriaBuilder) -> {
             List<Predicate> predicates = new ArrayList<>();
