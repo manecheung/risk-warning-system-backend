@@ -210,7 +210,7 @@ public class DashboardService {
      * @return 初始图谱数据对象
      */
     private CompanyGraphDTO getInitialGraph() {
-        PageRequest pageRequest = PageRequest.of(0, 50);
+        PageRequest pageRequest = PageRequest.of(0, 60);
         Page<CompanyInfo> companyPage = companyInfoRepository.findAll(pageRequest);
         List<CompanyInfo> initialCompanies = companyPage.getContent();
         if (initialCompanies.isEmpty()) {
@@ -219,6 +219,9 @@ public class DashboardService {
 
         Set<Long> initialCompanyIds = initialCompanies.stream().map(CompanyInfo::getId).collect(Collectors.toSet());
         List<CompanyRelation> relations = companyRelationRepository.findAllByCompanyIds(initialCompanyIds);
+        if (relations.size() > 60) {
+            relations = relations.subList(0, 60);
+        }
 
         Set<Long> allCompanyIdsInGraph = relations.stream()
                 .flatMap(relation -> Stream.of(relation.getCompanyOneId(), relation.getCompanyTwoId()))
@@ -259,13 +262,17 @@ public class DashboardService {
      * @return 匹配结果的图谱数据对象
      */
     private CompanyGraphDTO getGraphBySearch(String keyword) {
-        List<CompanyInfo> matchedCompanies = companyInfoRepository.findByNameContainingIgnoreCase(keyword);
+        Page<CompanyInfo> matchedCompaniesPage = companyInfoRepository.findByNameContainingIgnoreCase(keyword, PageRequest.of(0, 50));
+        List<CompanyInfo> matchedCompanies = matchedCompaniesPage.getContent();
         if (matchedCompanies.isEmpty()) {
             return new CompanyGraphDTO(Collections.emptyList(), Collections.emptyList());
         }
         Set<Long> matchedCompanyIds = matchedCompanies.stream().map(CompanyInfo::getId).collect(Collectors.toSet());
 
         List<CompanyRelation> relations = companyRelationRepository.findAllByCompanyIds(matchedCompanyIds);
+        if (relations.size() > 60) {
+            relations = relations.subList(0, 60);
+        }
 
         Set<Long> allCompanyIdsInGraph = relations.stream()
                 .flatMap(relation -> Stream.of(relation.getCompanyOneId(), relation.getCompanyTwoId()))

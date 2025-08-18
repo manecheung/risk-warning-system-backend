@@ -135,4 +135,12 @@ public interface CompanyInfoRepository extends JpaRepository<CompanyInfo, Long> 
      * @return 匹配的公司信息列表
      */
     List<CompanyInfo> findByNameContainingIgnoreCase(String name);
+
+    /**
+     * 根据公司名称进行模糊查询，并分页返回结果。
+     * @param name 公司名称关键词
+     * @param pageable 分页参数
+     * @return 匹配的公司信息分页结果
+     */
+    Page<CompanyInfo> findByNameContainingIgnoreCase(String name, Pageable pageable);
 }
