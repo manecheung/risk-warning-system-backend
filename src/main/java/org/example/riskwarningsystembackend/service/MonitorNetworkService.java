@@ -1,7 +1,10 @@
 package org.example.riskwarningsystembackend.service;
 
 import jakarta.annotation.PostConstruct;
+import org.example.riskwarningsystembackend.dto.RiskIdentificationResult;
+import org.example.riskwarningsystembackend.entity.CompanyInfo;
 import org.example.riskwarningsystembackend.entity.MonitoringArticle;
+import org.example.riskwarningsystembackend.entity.ProductNode;
 import org.example.riskwarningsystembackend.repository.MonitoringArticleRepository;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -29,7 +32,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 /**
- * 网络信息监测服务，用于定时爬取指定网站的新闻信息并存入数据库。
+ * 网络信息监测服务，用于定时爬取指定网站的新闻信息，进行风险识别并存入数据库。
  */
 @Service
 public class MonitorNetworkService {
@@ -37,14 +40,17 @@ public class MonitorNetworkService {
     private static final Logger logger = LoggerFactory.getLogger(MonitorNetworkService.class);
     private static final String BASE_URL = "https://fd.bjx.com.cn/yw/";
     private final MonitoringArticleRepository monitoringArticleRepository;
+    private final RiskIdentificationService riskIdentificationService;
 
     /**
-     * 构造函数，注入 MonitoringArticleRepository 实例。
+     * 构造函数，注入所需的服务实例。
      *
      * @param monitoringArticleRepository 用于操作 MonitoringArticle 实体的数据访问层组件
+     * @param riskIdentificationService   用于进行风险识别的服务
      */
-    public MonitorNetworkService(MonitoringArticleRepository monitoringArticleRepository) {
+    public MonitorNetworkService(MonitoringArticleRepository monitoringArticleRepository, RiskIdentificationService riskIdentificationService) {
         this.monitoringArticleRepository = monitoringArticleRepository;
+        this.riskIdentificationService = riskIdentificationService;
     }
 
     /**
@@ -56,7 +62,7 @@ public class MonitorNetworkService {
     @Scheduled(cron = "0 0 2 * * ?")
     @Transactional
     public void scrapeAndSaveArticles() {
-        logger.info("开始执行网络信息爬取任务...");
+        logger.info("开始执行网络信息爬取和风险识别任务...");
         try {
             // 创建信任所有证书的SSL上下文
             SSLContext sslContext = createTrustAllSslContext();
@@ -70,23 +76,18 @@ public class MonitorNetworkService {
             // 2. 遍历新闻列表
             for (Element item : newsItems) {
                 Element link = item.select("a").first();
-                if (link == null) {
-                    continue;
-                }
+                if (link == null) continue;
 
                 String articleUrl = link.attr("href");
                 String title = link.attr("title");
 
                 Element spanElement = item.select("span").first();
-                if (spanElement == null) {
-                    continue;
-                }
+                if (spanElement == null) continue;
 
                 String dateString = spanElement.text();
 
-                // 检查必要字段是否为空或空白
                 if (articleUrl.isEmpty() || title.isEmpty() || dateString.isEmpty()) {
-                    logger.warn("文章信息不完整，跳过处理");
+                    logger.warn("文章信息不完整，跳过处理: {}", title);
                     continue;
                 }
 
@@ -94,11 +95,10 @@ public class MonitorNetworkService {
                 try {
                     publishDate = LocalDate.parse(dateString, DateTimeFormatter.ofPattern("yyyy-MM-dd"));
                 } catch (DateTimeParseException e) {
-                    logger.warn("日期解析失败: {}", dateString);
+                    logger.warn("日期解析失败: {}, 文章: {}", dateString, title);
                     continue;
                 }
 
-                // 检查数据库中是否已存在相同标题和发布日期的文章，避免重复插入
                 if (monitoringArticleRepository.findByTitleAndDate(title, publishDate).isPresent()) {
                     logger.info("文章已存在，跳过: {} - {}", title, publishDate);
                     continue;
@@ -111,26 +111,43 @@ public class MonitorNetworkService {
                         .get();
 
                 // 4. 解析文章详情
-                String keywords = articleDoc.select("meta[name=Keywords]").attr("content");
+                String keywordsMeta = articleDoc.select("meta[name=Keywords]").attr("content");
                 Element articleContentElement = articleDoc.select("div.cc-article").first();
-                String articleContent = articleContentElement != null ? articleContentElement.html() : "";
+                String articleContentText = articleContentElement != null ? articleContentElement.text() : "";
+                String articleContentHtml = articleContentElement != null ? articleContentElement.html() : "";
 
-                // 提取第一张图片作为文章封面
+                if (articleContentText.isEmpty()) {
+                    logger.warn("文章内容为空，跳过风险分析: {}", title);
+                    continue;
+                }
+
                 String imageUrl = extractFirstImage(articleDoc);
 
-                // 5. 创建并保存实体
+                // 5. 创建实体
                 MonitoringArticle article = new MonitoringArticle();
                 article.setTitle(title);
                 article.setDate(publishDate);
                 article.setUrl(articleUrl);
-                article.setType("news");
                 article.setAuthor("北极星风力发电网");
-                article.setContent(articleContent);
-                article.setImage(imageUrl); // 设置文章封面图片
+                article.setContent(articleContentHtml);
+                article.setImage(imageUrl);
 
-                // 处理关键字
-                if (!keywords.isEmpty()) {
-                    List<String> tags = Arrays.stream(keywords.split("[，,]"))
+                // 6. 调用风险识别服务
+                RiskIdentificationResult riskResult = riskIdentificationService.identifyRisk(articleContentText);
+
+                if (riskResult.isRisk()) {
+                    logger.info("发现风险文章: {}", title);
+                    article.setType("risk");
+                    article.setRiskSource(String.join(", ", riskResult.getMatchedRiskKeywords()));
+                    article.setRelatedCompany(riskResult.getMatchedCompanies().stream().map(CompanyInfo::getName).collect(Collectors.joining(", ")));
+                    article.setRelatedProduct(riskResult.getMatchedProducts().stream().map(ProductNode::getName).collect(Collectors.joining(", ")));
+                } else {
+                    article.setType("news");
+                }
+
+                // 处理元数据关键字作为标签
+                if (!keywordsMeta.isEmpty()) {
+                    List<String> tags = Arrays.stream(keywordsMeta.split("[，,]"))
                             .map(String::trim)
                             .filter(tag -> !tag.isEmpty())
                             .collect(Collectors.toList());
@@ -139,16 +156,17 @@ public class MonitorNetworkService {
                     article.setTags(Collections.emptyList());
                 }
 
+                // 7. 保存实体
                 monitoringArticleRepository.save(article);
-                logger.info("成功保存文章: {}", title);
+                logger.info("成功保存文章: {} (类型: {})", article.getTitle(), article.getType());
 
             }
         } catch (IOException e) {
             logger.error("网络信息爬取任务失败", e);
         } catch (Exception e) {
-            logger.error("SSL配置错误", e);
+            logger.error("处理文章时发生未知错误", e);
         }
-        logger.info("网络信息爬取任务执行完毕。");
+        logger.info("网络信息爬取和风险识别任务执行完毕。");
     }
 
     /**
@@ -164,11 +182,9 @@ public class MonitorNetworkService {
                 Element firstImage = articleElement.select("img").first();
                 if (firstImage != null) {
                     String imageUrl = firstImage.attr("src");
-                    // 如果是相对路径，转换为绝对路径
                     if (imageUrl.startsWith("//")) {
                         imageUrl = "https:" + imageUrl;
                     } else if (imageUrl.startsWith("/")) {
-                        // 处理相对路径
                         imageUrl = "https://news.bjx.com.cn" + imageUrl;
                     }
                     return imageUrl;
