@@ -129,12 +129,13 @@ public class SystemManagerDataInitializer implements CommandLineRunner {
         adminRole.setPermissions(new HashSet<>(allPermissions));
         roleRepository.save(adminRole);
 
-        // 普通用户角色 (可选，可以创建一个仅有查看权限的角色)
+        // 普通用户角色
         Role userRole = new Role();
         userRole.setName("普通用户");
-        userRole.setDescription("仅能查看首页看板");
-        Permission dashboardView = permissionRepository.findByKey("dashboard:view").orElseThrow();
-        userRole.setPermissions(new HashSet<>(List.of(dashboardView)));
+        userRole.setDescription("普通用户默认拥有除了系统管理的所有页面的访问权限。");
+        List<Permission> allPermissionsForUser = permissionRepository.findAll();
+        allPermissionsForUser.removeIf(p -> p.getKey().startsWith("system"));
+        userRole.setPermissions(new HashSet<>(allPermissionsForUser));
         roleRepository.save(userRole);
     }
 
