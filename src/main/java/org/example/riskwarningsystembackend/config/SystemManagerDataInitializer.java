@@ -91,6 +91,10 @@ public class SystemManagerDataInitializer implements CommandLineRunner {
         createPermission("system:users:manage", "用户管理", system);
         createPermission("system:roles:manage", "角色管理", system);
         createPermission("system:orgs:manage", "组织管理", system);
+
+        Permission uestc = createPermission("uestc", "电子科大API", null);
+        createPermission("uestc-graph:view", "查看图谱", uestc);
+        createPermission("model-management:view", "查看模型", uestc);
     }
 
     /**
