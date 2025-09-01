@@ -180,7 +180,7 @@ public class UestcApiService {
         });
         if (result.getCode() == ResultCode.SUCCESS.getCode() && result.getData() != null) {
             UestcGraphDTO graph = result.getData();
-            // 数据缩减逻辑: 如果节点数超过100，则进行截断处理
+            // 数据缩减逻辑: 如果节点数超过200，则进行截断处理
             if (graph.getNodes().size() > 200) {
                 log.info("数据量超过200，进行缩减处理。");
                 List<UestcNodeDTO> nodes = graph.getNodes().stream().limit(200).collect(Collectors.toList());

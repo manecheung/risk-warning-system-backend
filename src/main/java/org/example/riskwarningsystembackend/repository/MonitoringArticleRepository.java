@@ -9,10 +9,9 @@ import java.util.Optional;
 
 public interface MonitoringArticleRepository extends JpaRepository<MonitoringArticle, Long>, JpaSpecificationExecutor<MonitoringArticle> {
     /**
-     * 根据标题和发布日期查找文章，用于防止重复插入。
-     * @param title 文章标题
-     * @param date 发布日期
-     * @return 可选的文章实体
+     * 根据URL检查文章是否存在。
+     * @param url 文章链接
+     * @return 如果存在则返回true，否则返回false
      */
-    Optional<MonitoringArticle> findByTitleAndDate(String title, LocalDate date);
+    boolean existsByUrl(String url);
 }
