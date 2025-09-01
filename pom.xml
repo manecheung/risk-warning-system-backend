@@ -1,52 +1,82 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <!-- Maven 模型版本 -->
     <modelVersion>4.0.0</modelVersion>
+
+    <!-- 父项目配置，继承 Spring Boot 的默认配置 -->
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>3.5.4</version>
-        <relativePath/> <!-- lookup parent from repository -->
+        <version>3.5.5</version>
+        <relativePath/>
     </parent>
+
+    <!-- 项目基本信息 -->
     <groupId>org.example</groupId>
     <artifactId>risk-warning-system-backend</artifactId>
     <version>0.0.1-SNAPSHOT</version>
     <name>risk-warning-system-backend</name>
     <description>risk-warning-system-backend</description>
     <url/>
+
+    <!-- 项目许可证信息 -->
     <licenses>
         <license/>
     </licenses>
+
+    <!-- 项目开发者信息 -->
     <developers>
         <developer/>
     </developers>
+
+    <!-- 项目源码管理信息 -->
     <scm>
         <connection/>
         <developerConnection/>
         <tag/>
         <url/>
     </scm>
+
+    <!-- 项目属性配置 -->
     <properties>
+        <!-- Java 版本配置 -->
         <java.version>21</java.version>
+        <!-- Lombok 版本配置 -->
         <lombok.version>1.18.34</lombok.version>
     </properties>
+
+    <!-- 依赖管理 -->
+    <dependencyManagement>
+    </dependencyManagement>
+
+    <!-- 项目依赖配置 -->
     <dependencies>
+        <!-- Spring Boot Web 模块，提供 Web 应用开发支持 -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
         </dependency>
+
+        <!-- Spring Boot Validation 模块，提供数据校验功能 -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-validation</artifactId>
         </dependency>
+
+        <!-- Spring Boot JPA 模块，提供数据持久化支持 -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-data-jpa</artifactId>
         </dependency>
+
+        <!-- Spring Boot Security 模块，提供安全认证和授权功能 -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-security</artifactId>
         </dependency>
+
+        <!-- JWT Token 支持，API 认证使用 -->
         <dependency>
             <groupId>io.jsonwebtoken</groupId>
             <artifactId>jjwt-api</artifactId>
@@ -65,38 +95,55 @@
             <scope>runtime</scope>
         </dependency>
 
+        <!-- PostgreSQL 数据库驱动 -->
         <dependency>
             <groupId>org.postgresql</groupId>
             <artifactId>postgresql</artifactId>
             <scope>runtime</scope>
         </dependency>
+
+        <!-- Lombok 库，简化 Java 代码编写 -->
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
             <version>${lombok.version}</version>
             <scope>provided</scope>
         </dependency>
+
+        <!-- Spring Boot 测试模块 -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>
             <scope>test</scope>
         </dependency>
+
+        <!-- Spring Security 测试模块 -->
         <dependency>
             <groupId>org.springframework.security</groupId>
             <artifactId>spring-security-test</artifactId>
             <scope>test</scope>
         </dependency>
+
+        <!-- OpenCSV 库，用于处理 CSV 文件 -->
         <dependency>
             <groupId>com.opencsv</groupId>
             <artifactId>opencsv</artifactId>
             <version>5.12.0</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.apache.commons</groupId>
+                    <artifactId>commons-lang3</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
+
         <!-- Jsoup HTML Parser -->
         <dependency>
             <groupId>org.jsoup</groupId>
             <artifactId>jsoup</artifactId>
             <version>1.17.2</version>
         </dependency>
+
         <!-- Flyway Migration -->
         <dependency>
             <groupId>org.flywaydb</groupId>
@@ -106,14 +153,40 @@
             <groupId>org.flywaydb</groupId>
             <artifactId>flyway-database-postgresql</artifactId>
         </dependency>
+
+        <!-- Jackson JSR310 支持，处理 Java 8 时间类型 -->
         <dependency>
             <groupId>com.fasterxml.jackson.datatype</groupId>
             <artifactId>jackson-datatype-jsr310</artifactId>
         </dependency>
+
+        <!-- Smile Machine Learning Library for ARIMA model -->
+        <dependency>
+            <groupId>com.github.haifengl</groupId>
+            <artifactId>smile-core</artifactId>
+            <version>4.4.0</version>
+        </dependency>
+        <dependency>
+            <groupId>org.bytedeco</groupId>
+            <artifactId>javacpp</artifactId>
+            <version>1.5.12</version>
+        </dependency>
+        <dependency>
+            <groupId>org.bytedeco</groupId>
+            <artifactId>openblas</artifactId>
+            <version>0.3.30-1.5.12</version>
+        </dependency>
+        <dependency>
+            <groupId>org.bytedeco</groupId>
+            <artifactId>openblas-platform</artifactId>
+            <version>0.3.30-1.5.12</version>
+        </dependency>
     </dependencies>
 
+    <!-- 构建配置 -->
     <build>
         <plugins>
+            <!-- Spring Boot Maven 插件，用于打包可执行 jar -->
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
@@ -126,10 +199,11 @@
                     </excludes>
                 </configuration>
             </plugin>
+
+            <!-- Maven 编译插件，配置 Java 版本和注解处理器 -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.8.1</version>
                 <configuration>
                     <source>21</source>
                     <target>21</target>
@@ -148,6 +222,7 @@
                     </annotationProcessorPaths>
                 </configuration>
             </plugin>
+
             <!-- Flyway Maven 插件：用于命令行 repair / migrate -->
             <plugin>
                 <groupId>org.flywaydb</groupId>

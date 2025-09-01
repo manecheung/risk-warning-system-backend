@@ -1,6 +1,5 @@
 -- V1__Initial_Schema.sql (Unified & Corrected)
 -- This script creates the complete initial database schema for the risk warning system.
--- It includes simulation management tables from the start to ensure correct dependency order.
 
 -- =================================================================
 -- Table for Company Information
@@ -103,7 +102,9 @@ CREATE TABLE users
     enabled         BOOLEAN             NOT NULL DEFAULT true,
     status          VARCHAR(255),
     last_login      TIMESTAMP,
-    organization_id BIGINT
+    organization_id BIGINT,
+    created_at      TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at      TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
 ALTER TABLE organizations
@@ -120,6 +121,7 @@ CREATE TABLE roles
     description VARCHAR(255)
 );
 
+-- Restored 'permissions' table to its correct, full definition
 CREATE TABLE permissions
 (
     id          BIGSERIAL PRIMARY KEY,
@@ -136,8 +138,8 @@ CREATE TABLE user_roles
     user_id BIGINT NOT NULL,
     role_id BIGINT NOT NULL,
     PRIMARY KEY (user_id, role_id),
-    CONSTRAINT fk_user FOREIGN KEY (user_id) REFERENCES users (id),
-    CONSTRAINT fk_role FOREIGN KEY (role_id) REFERENCES roles (id)
+    CONSTRAINT fk_user FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE,
+    CONSTRAINT fk_role FOREIGN KEY (role_id) REFERENCES roles (id) ON DELETE CASCADE
 );
 
 CREATE TABLE role_permissions
@@ -145,8 +147,8 @@ CREATE TABLE role_permissions
     role_id       BIGINT NOT NULL,
     permission_id BIGINT NOT NULL,
     PRIMARY KEY (role_id, permission_id),
-    CONSTRAINT fk_role_perm FOREIGN KEY (role_id) REFERENCES roles (id),
-    CONSTRAINT fk_perm_role FOREIGN KEY (permission_id) REFERENCES permissions (id)
+    CONSTRAINT fk_role_perm FOREIGN KEY (role_id) REFERENCES roles (id) ON DELETE CASCADE,
+    CONSTRAINT fk_perm_role FOREIGN KEY (permission_id) REFERENCES permissions (id) ON DELETE CASCADE
 );
 
 -- =================================================================
@@ -178,8 +180,6 @@ CREATE TABLE monitoring_article_tags
 -- =================================================================
 -- Tables for Simulation Management & Data
 -- =================================================================
-
--- Create the 'simulations' table FIRST, as other tables depend on it.
 CREATE TABLE simulations
 (
     id          BIGSERIAL PRIMARY KEY,
@@ -188,7 +188,6 @@ CREATE TABLE simulations
     created_at  TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
--- Table for KRI (Key Risk Indicators)
 CREATE TABLE kri
 (
     id         BIGSERIAL PRIMARY KEY,
@@ -210,7 +209,6 @@ CREATE TABLE kri
     kri_score  DOUBLE PRECISION
 );
 
--- Table for Company Simulation Data, now with a direct foreign key to 'simulations'.
 CREATE TABLE company_simulation_data
 (
     id              BIGSERIAL PRIMARY KEY,
@@ -227,7 +225,6 @@ CREATE TABLE company_simulation_data
     CONSTRAINT fk_company_simulation_kri FOREIGN KEY (kri_id) REFERENCES kri (id) ON DELETE CASCADE
 );
 
--- Tables for KCI W values (one for each KC)
 CREATE TABLE kri_kc1_w (kri_id BIGINT NOT NULL, value DOUBLE PRECISION, CONSTRAINT fk_kri_kc1_w FOREIGN KEY (kri_id) REFERENCES kri (id) ON DELETE CASCADE);
 CREATE TABLE kri_kc2_w (kri_id BIGINT NOT NULL, value DOUBLE PRECISION, CONSTRAINT fk_kri_kc2_w FOREIGN KEY (kri_id) REFERENCES kri (id) ON DELETE CASCADE);
 CREATE TABLE kri_kc3_w (kri_id BIGINT NOT NULL, value DOUBLE PRECISION, CONSTRAINT fk_kri_kc3_w FOREIGN KEY (kri_id) REFERENCES kri (id) ON DELETE CASCADE);
@@ -242,11 +239,10 @@ CREATE TABLE kri_kc11_w (kri_id BIGINT NOT NULL, value DOUBLE PRECISION, CONSTRA
 CREATE TABLE kri_kc12_w (kri_id BIGINT NOT NULL, value DOUBLE PRECISION, CONSTRAINT fk_kri_kc12_w FOREIGN KEY (kri_id) REFERENCES kri (id) ON DELETE CASCADE);
 CREATE TABLE kri_kc13_w (kri_id BIGINT NOT NULL, value DOUBLE PRECISION, CONSTRAINT fk_kri_kc13_w FOREIGN KEY (kri_id) REFERENCES kri (id) ON DELETE CASCADE);
 
--- Table for Material Data, linked to company_simulation_data
 CREATE TABLE material_data
 (
     id    BIGSERIAL PRIMARY KEY,
-    simulation_id BIGINT, -- This is the FOREIGN KEY to company_simulation_data.id
+    simulation_id BIGINT,
     name  VARCHAR(255),
     w     DOUBLE PRECISION,
     n_max DOUBLE PRECISION,
@@ -255,11 +251,10 @@ CREATE TABLE material_data
 
 CREATE TABLE material_data_suppliers (material_data_id BIGINT NOT NULL, supplier_id INTEGER, CONSTRAINT fk_material_data_suppliers FOREIGN KEY (material_data_id) REFERENCES material_data (id) ON DELETE CASCADE);
 
--- Table for Product Data, linked to company_simulation_data
 CREATE TABLE product_data
 (
     id   BIGSERIAL PRIMARY KEY,
-    simulation_id BIGINT, -- This is the FOREIGN KEY to company_simulation_data.id
+    simulation_id BIGINT,
     name VARCHAR(255),
     w    DOUBLE PRECISION,
     nums DOUBLE PRECISION,
@@ -270,10 +265,38 @@ CREATE TABLE product_data
 CREATE TABLE product_data_competitors (product_data_id BIGINT NOT NULL, competitor_id INTEGER, CONSTRAINT fk_product_data_competitors FOREIGN KEY (product_data_id) REFERENCES product_data (id) ON DELETE CASCADE);
 CREATE TABLE product_data_customers (product_data_id BIGINT NOT NULL, customer_id VARCHAR(255), value DOUBLE PRECISION, CONSTRAINT fk_product_data_customers FOREIGN KEY (product_data_id) REFERENCES product_data (id) ON DELETE CASCADE);
 
--- Table for Company Simulation List X
 CREATE TABLE company_simulation_list_x
 (
     simulation_id BIGINT NOT NULL,
     value         DOUBLE PRECISION,
     CONSTRAINT fk_company_simulation_list_x FOREIGN KEY (simulation_id) REFERENCES company_simulation_data (id) ON DELETE CASCADE
 );
+
+-- =================================================================
+-- Tables for SMM Data
+-- =================================================================
+CREATE TABLE smm_indicator (
+   id BIGSERIAL PRIMARY KEY,
+   quota_id VARCHAR(50) NOT NULL UNIQUE,
+   quota_name VARCHAR(255) NOT NULL,
+   unit VARCHAR(50),
+   frequency VARCHAR(20),
+   source VARCHAR(50),
+   data_start DATE,
+   data_end DATE,
+   created_at TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+   updated_at TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE smm_price_data (
+    id BIGSERIAL PRIMARY KEY,
+    indicator_id BIGINT NOT NULL,
+    price_date DATE NOT NULL,
+    value NUMERIC(18, 4),
+    created_at TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_indicator FOREIGN KEY(indicator_id) REFERENCES smm_indicator(id) ON DELETE CASCADE,
+    UNIQUE (indicator_id, price_date)
+);
+
+CREATE INDEX idx_smm_indicator_quota_id ON smm_indicator(quota_id);
+CREATE INDEX idx_smm_price_data_indicator_id_date ON smm_price_data(indicator_id, price_date);
