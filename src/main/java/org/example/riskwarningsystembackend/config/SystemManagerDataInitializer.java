@@ -79,9 +79,6 @@ public class SystemManagerDataInitializer implements CommandLineRunner {
         Permission monitoring = createPermission("monitoring", "网络信息监测", null);
         createPermission("monitoring:view", "查看资讯", monitoring);
 
-        Permission materials = createPermission("materials", "原材料价格监测", null);
-        createPermission("materials:view", "查看价格", materials);
-
         Permission chainRisk = createPermission("chain-risk", "产业链风险预警", null);
         createPermission("chain-risk:view", "查看风险", chainRisk);
         createPermission("chain-risk:manage", "管理模拟", chainRisk);
@@ -98,6 +95,9 @@ public class SystemManagerDataInitializer implements CommandLineRunner {
         Permission uestc = createPermission("uestc", "电子科大API", null);
         createPermission("uestc-graph:view", "查看图谱", uestc);
         createPermission("model-management:view", "查看模型", uestc);
+
+        Permission materials = createPermission("materials", "原材料价格监测", null);
+        createPermission("materials:view", "查看价格", materials);
     }
 
     /**
