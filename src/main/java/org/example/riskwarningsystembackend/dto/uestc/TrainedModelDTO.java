@@ -1,11 +1,14 @@
 package org.example.riskwarningsystembackend.dto.uestc;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.Data;
 
 import java.time.LocalDateTime;
 
+/**
+ * 训练模型DTO
+ * 用于接收和解析电子科技大学风险预警系统API返回的训练模型信息
+ */
 @Data
 public class TrainedModelDTO {
     private Integer id;

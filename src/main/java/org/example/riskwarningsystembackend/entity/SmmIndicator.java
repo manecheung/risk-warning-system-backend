@@ -5,20 +5,23 @@ import lombok.Data;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
+import java.io.Serial;
 import java.io.Serializable;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 /**
  * SMM原材料指标信息实体
+ * 映射数据库中的smm_indicator表，存储上海有色金属网的原材料指标信息
  */
 @Entity
 @Table(name = "smm_indicator", uniqueConstraints = {
-        @UniqueConstraint(columnNames = {"quotaId"})
+        @UniqueConstraint(columnNames = {"quota_id"})
 })
 @Data
 public class SmmIndicator implements Serializable {
 
+    @Serial
     private static final long serialVersionUID = 1L;
 
     @Id

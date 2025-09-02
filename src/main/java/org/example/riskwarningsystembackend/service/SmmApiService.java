@@ -30,6 +30,10 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 
+/**
+ * SMM API服务类
+ * 提供与上海有色金属网(SMM)API交互的功能，包括认证、数据同步等操作
+ */
 @Service
 public class SmmApiService {
 
@@ -62,6 +66,10 @@ public class SmmApiService {
         this.restTemplate = new RestTemplate();
     }
 
+    /**
+     * 初始化数据
+     * 在服务启动时执行，获取API令牌并同步指标列表和最近的数据
+     */
     @PostConstruct
     @Transactional
     public void initializeData() {
@@ -74,6 +82,10 @@ public class SmmApiService {
         log.info("SMM服务启动初始化任务完成。");
     }
 
+    /**
+     * 同步指标列表
+     * 从SMM API获取所有指标信息并保存到数据库中
+     */
     @Transactional
     public void syncIndicators() {
         log.info("开始同步SMM指标列表...");
@@ -111,6 +123,14 @@ public class SmmApiService {
         log.info("SMM指标列表同步完成。{}", hasError ? "但过程存在错误" : "");
     }
 
+    /**
+     * 同步指定指标的价格数据
+     * 根据指标ID和日期范围从SMM API获取价格数据并保存到数据库中
+     *
+     * @param quotaId 指标配额ID
+     * @param startDate 起始日期
+     * @param endDate 结束日期
+     */
     @Transactional
     public void syncPriceDataForIndicator(String quotaId, LocalDate startDate, LocalDate endDate) {
         log.debug("为指标 {} 同步从 {} 到 {} 的价格数据", quotaId, startDate, endDate);
@@ -157,6 +177,10 @@ public class SmmApiService {
         }, () -> log.warn("数据库中不存在指标ID: {}, 跳过价格同步", quotaId));
     }
 
+    /**
+     * 同步最近数据
+     * 同步所有日度指标最近7天的价格数据
+     */
     @Transactional
     public void syncRecentData() {
         log.info("开始同步最近7天的日度SMM价格数据...");
@@ -173,6 +197,10 @@ public class SmmApiService {
         log.info("最近7天的日度SMM价格数据同步完成，共处理 {} 个日度指标。", dailyIndicators.size());
     }
 
+    /**
+     * 定时同步每日数据
+     * 每天凌晨3点执行，同步所有日度指标前一天的价格数据
+     */
     @Scheduled(cron = "0 0 3 * * ?")
     @Transactional
     public void scheduledSyncDailyData() {
@@ -189,10 +217,21 @@ public class SmmApiService {
         log.info("每日SMM数据同步定时任务执行完毕，共处理 {} 个日度指标。", dailyIndicators.size());
     }
 
+    /**
+     * 检查令牌是否过期
+     *
+     * @return boolean 如果令牌过期返回true，否则返回false
+     */
     private boolean isTokenExpired() {
         return tokenExpirationTime == null || tokenExpirationTime.isBefore(LocalDateTime.now());
     }
 
+    /**
+     * 获取有效令牌
+     * 如果当前令牌为空或已过期，则重新登录获取新令牌
+     *
+     * @return String 有效的令牌字符串
+     */
     private String getValidToken() {
         if (token == null || isTokenExpired()) {
             login();
@@ -200,6 +239,10 @@ public class SmmApiService {
         return token;
     }
 
+    /**
+     * 登录获取令牌
+     * 调用SMM API的认证接口获取访问令牌
+     */
     private void login() {
         String url = baseUrl + "/dapi/user/auth";
         HttpHeaders headers = new HttpHeaders();
@@ -212,12 +255,17 @@ public class SmmApiService {
         try {
             ResponseEntity<String> response = restTemplate.postForEntity(url, requestEntity, String.class);
             SmmAuthResponse authResponse = objectMapper.readValue(response.getBody(), SmmAuthResponse.class);
-            if (authResponse.getCode() == 0 && authResponse.getData() != null && authResponse.getData().getToken() != null) {
-                this.token = authResponse.getData().getToken();
-                this.tokenExpirationTime = LocalDateTime.now().plusDays(7);
-                log.info("成功获取SMM API Token");
+            if (authResponse != null) {
+                if (authResponse.getCode() == 0 && authResponse.getData() != null && authResponse.getData().getToken() != null) {
+                    this.token = authResponse.getData().getToken();
+                    this.tokenExpirationTime = LocalDateTime.now().plusDays(7);
+                    log.info("成功获取SMM API Token");
+                } else {
+                    log.error("SMM API登录失败: {}", authResponse.getMsg());
+                    this.token = null;
+                }
             } else {
-                log.error("SMM API登录失败: {}", authResponse != null ? authResponse.getMsg() : "响应体为空");
+                log.error("SMM API登录失败: 响应体为空");
                 this.token = null;
             }
         } catch (Exception e) {
@@ -226,6 +274,13 @@ public class SmmApiService {
         }
     }
 
+    /**
+     * 获取指标列表的指定页面
+     * 调用SMM API获取指标列表的指定页面数据
+     *
+     * @param page 页码
+     * @return SmmQuotaListResponse 指标列表响应对象
+     */
     private SmmQuotaListResponse fetchIndicatorPage(int page) {
         String url = baseUrl + "/dapi/quota/quota_list?token=" + getValidToken() + "&page=" + page + "&page_size=500";
         try {
@@ -237,6 +292,15 @@ public class SmmApiService {
         }
     }
 
+    /**
+     * 获取价格数据
+     * 调用SMM API获取指定指标和日期范围的价格数据
+     *
+     * @param quotaId 指标配额ID
+     * @param startDate 起始日期
+     * @param endDate 结束日期
+     * @return SmmPriceDataResponse 价格数据响应对象
+     */
     private SmmPriceDataResponse fetchPriceData(String quotaId, LocalDate startDate, LocalDate endDate) {
         String url = baseUrl + "/dapi/quota/data_origin";
         HttpHeaders headers = new HttpHeaders();

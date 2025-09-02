@@ -10,12 +10,24 @@ import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.stream.Collectors;
 
+/**
+ * 产业链风险服务类
+ * 负责处理产业链风险模拟的核心业务逻辑
+ */
 @Service
 public class ChainRiskService {
 
     private static final double A = 0.5; // 风险传播强度系数
     private static final double B = 0.15; // 风险触发阈值系数
 
+    /**
+     * 运行产业链风险模拟
+     * 根据指定的初始异常节点，模拟风险在整个产业链中的传播过程
+     *
+     * @param initialAbnormalNode 初始异常节点ID
+     * @return SimulationResult 模拟结果，包含每一步的状态和最终异常原因
+     * @throws IOException 当加载贸易数据失败时抛出
+     */
     public SimulationResult runSimulation(String initialAbnormalNode) throws IOException {
         List<TradeLink> tradeLinks = loadTradeData();
 
@@ -26,7 +38,7 @@ public class ChainRiskService {
         });
 
         if (!allNodeIds.contains(initialAbnormalNode)) {
-            throw new IllegalArgumentException("Initial abnormal node not found in trade data.");
+            throw new IllegalArgumentException("初始异常节点在贸易数据中未找到");
         }
 
         Map<String, SimulationNode> nodes = allNodeIds.stream()
@@ -102,6 +114,13 @@ public class ChainRiskService {
         return new SimulationResult(log, finalAbnormalReasons);
     }
 
+    /**
+     * 传播风险到相邻节点
+     * 当一个节点变为异常状态时，会对其上下游节点产生影响，降低贸易值
+     *
+     * @param abnormalNode 异常节点
+     * @param allNodes 所有节点的映射
+     */
     private void propagateRisk(SimulationNode abnormalNode, Map<String, SimulationNode> allNodes) {
         // 影响下游（我的进口来源国）
         for (Map.Entry<String, Double> importEntry : abnormalNode.getCurrentImportValue().entrySet()) {
@@ -124,6 +143,15 @@ public class ChainRiskService {
         }
     }
 
+    /**
+     * 记录当前步骤的模拟状态
+     * 将当前所有节点的状态和连接关系保存为一步模拟记录
+     *
+     * @param step 当前步骤编号
+     * @param nodes 所有节点
+     * @param reasons 当前步骤的异常原因
+     * @return SimulationStep 模拟步骤记录
+     */
     private SimulationStep captureStep(int step, Map<String, SimulationNode> nodes, Map<String, String> reasons) {
         Map<String, String> states = nodes.values().stream()
                 .collect(Collectors.toMap(SimulationNode::getId, SimulationNode::getStatus));
@@ -145,6 +173,13 @@ public class ChainRiskService {
         return new SimulationStep(step, states, reasons, links);
     }
 
+    /**
+     * 解析CSV行数据
+     * 将CSV格式的一行数据解析为字段列表，正确处理引号和逗号
+     *
+     * @param line CSV格式的一行数据
+     * @return List<String> 解析后的字段列表
+     */
     private List<String> parseCsvLine(String line) {
         List<String> fields = new ArrayList<>();
         StringBuilder currentField = new StringBuilder();
@@ -164,12 +199,19 @@ public class ChainRiskService {
         return fields;
     }
 
+    /**
+     * 加载贸易数据
+     * 从资源文件中读取贸易数据并解析为TradeLink对象列表
+     *
+     * @return List<TradeLink> 贸易链接列表
+     * @throws IOException 当读取资源文件失败时抛出
+     */
     private List<TradeLink> loadTradeData() throws IOException {
         List<TradeLink> tradeLinks = new ArrayList<>();
         String resourceName = "data/trade_edges.csv";
         InputStream is = getClass().getClassLoader().getResourceAsStream(resourceName);
         if (is == null) {
-            throw new IOException("Resource not found: " + resourceName);
+            throw new IOException("资源未找到: " + resourceName);
         }
 
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(is, StandardCharsets.UTF_8))) {
@@ -187,7 +229,7 @@ public class ChainRiskService {
                         double value = Double.parseDouble(parts.get(2));
                         tradeLinks.add(new TradeLink(reporter, partner, value));
                     } catch (NumberFormatException e) {
-                        System.err.println("Skipping invalid line (number format issue): " + line);
+                        System.err.println("跳过无效行（数字格式问题）: " + line);
                     }
                 }
             }
