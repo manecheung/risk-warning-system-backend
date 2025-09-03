@@ -153,6 +153,12 @@ public class MonitorNetworkService {
             // 连接网站并获取页面内容
             Document doc = Jsoup.connect(config.listUrl())
                     .sslSocketFactory(sslContext.getSocketFactory())
+                    .userAgent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/98.0.4758.102 Safari/537.36")
+                    .header("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9")
+                    .header("Accept-Language", "zh-CN,zh;q=0.9,en-US;q=0.8,en;q=0.7")
+                    .header("Connection", "keep-alive")
+                    .header("Upgrade-Insecure-Requests", "1")
+                    .timeout(10000)
                     .get();
             Elements newsItems = doc.select(config.itemSelector());
 
@@ -191,10 +197,19 @@ public class MonitorNetworkService {
                     continue;
                 }
 
+                // 在请求文章详情页前添加随机延时，模拟人类行为
+                addRandomDelay();
+
                 logger.info("【{}】正在爬取文章: {}", config.sourceName(), articleUrl);
                 // 获取文章详细内容
                 Document articleDoc = Jsoup.connect(articleUrl)
                         .sslSocketFactory(sslContext.getSocketFactory())
+                        .userAgent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/98.0.4758.102 Safari/537.36")
+                        .header("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9")
+                        .header("Accept-Language", "zh-CN,zh;q=0.9,en-US;q=0.8,en;q=0.7")
+                        .header("Connection", "keep-alive")
+                        .header("Upgrade-Insecure-Requests", "1")
+                        .timeout(10000)
                         .get();
 
                 // 提取关键词和文章内容
@@ -285,6 +300,10 @@ public class MonitorNetworkService {
             if (dateString.contains("小时前") || dateString.contains("分钟前")) {
                 return LocalDate.now();
             }
+            // 处理相对时间格式（如"1天前"）
+            if (dateString.contains("天前")) {
+                return LocalDate.now().minusDays(Integer.parseInt(dateString.replace("天前", "")));
+            }
             // 按指定格式解析日期
             return LocalDate.parse(dateString, DateTimeFormatter.ofPattern(pattern));
         } catch (DateTimeParseException e) {
@@ -337,5 +356,18 @@ public class MonitorNetworkService {
         SSLContext sslContext = SSLContext.getInstance("TLS");
         sslContext.init(null, trustAllCerts, new java.security.SecureRandom());
         return sslContext;
+    }
+
+    /**
+     * 添加随机延时，模拟人类行为
+     * 延时范围为1-3秒
+     */
+    private void addRandomDelay() {
+        try {
+            int delay = (int) (Math.random() * 2000) + 1000; // 1000-3000毫秒
+            Thread.sleep(delay);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
     }
 }
