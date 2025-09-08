@@ -40,7 +40,7 @@ public class MonitorNetworkService {
     private final MonitoringArticleRepository monitoringArticleRepository;
     private final MonitorRiskIdentificationService monitorRiskIdentificationService;
 
-    // 定义三个网站的爬取配置
+    // 定义五个网站的爬取配置
     private static final ScrapeConfig BJX_CONFIG = new ScrapeConfig(
             "北极星风力发电网",
             "https://fd.bjx.com.cn/yw/",
@@ -70,6 +70,28 @@ public class MonitorNetworkService {
             "div.listTxt h5 a",
             "div.prompt i",
             "div#article",
+            "yyyy-MM-dd",
+            true
+    );
+
+    private static final ScrapeConfig EWINDPOWER_CONFIG = new ScrapeConfig(
+            "国际风能网",
+            "http://www.ewindpower.cn/news/list-htm-catid-5.html",
+            "div#iframe_11 .c1 ul li",
+            "a",
+            "span.r",
+            "div#article",
+            "yyyy-MM-dd",
+            false
+    );
+
+    private static final ScrapeConfig FENGDIANQUAN_CONFIG = new ScrapeConfig(
+            "风电圈",
+            "https://fengdianquan.com/index.php/article/qydt.html",
+            "div.newscontrb ul li",
+            "a",
+            "span.newscontrbb",
+            "div.cgcont div.content",
             "yyyy-MM-dd",
             true
     );
@@ -109,6 +131,8 @@ public class MonitorNetworkService {
         scrapeSite(BJX_CONFIG);
         scrapeSite(CWEEA_CONFIG);
         scrapeSite(IN_EN_CONFIG);
+        scrapeSite(EWINDPOWER_CONFIG);
+        scrapeSite(FENGDIANQUAN_CONFIG);
         logger.info("所有站点的启动时爬取任务执行完毕。");
     }
 
@@ -137,6 +161,24 @@ public class MonitorNetworkService {
     @Transactional
     public void scrapeInEnNews() {
         scrapeSite(IN_EN_CONFIG);
+    }
+
+    /**
+     * 定时爬取国际风能网新闻
+     */
+    @Scheduled(cron = "0 15 2 * * ?")
+    @Transactional
+    public void scrapeEwindpowerNews() {
+        scrapeSite(EWINDPOWER_CONFIG);
+    }
+
+    /**
+     * 定时爬取风电圈新闻
+     */
+    @Scheduled(cron = "0 20 2 * * ?")
+    @Transactional
+    public void scrapeFengdianquanNews() {
+        scrapeSite(FENGDIANQUAN_CONFIG);
     }
 
     /**
@@ -214,6 +256,18 @@ public class MonitorNetworkService {
 
                 // 提取关键词和文章内容
                 String keywordsMeta = articleDoc.select("meta[name=Keywords]").attr("content");
+
+                // 特殊处理“风电圈”的图片URL
+                if ("风电圈".equals(config.sourceName())) {
+                    Elements images = articleDoc.select(config.contentSelector() + " img");
+                    for (Element img : images) {
+                        String src = img.attr("src");
+                        if (src.startsWith("/")) {
+                            img.attr("src", "https://fengdianquan.com" + src);
+                        }
+                    }
+                }
+
                 Element articleContentElement = articleDoc.select(config.contentSelector()).first();
                 String articleContentText = articleContentElement != null ? articleContentElement.text() : "";
                 String articleContentHtml = articleContentElement != null ? articleContentElement.html() : "";
