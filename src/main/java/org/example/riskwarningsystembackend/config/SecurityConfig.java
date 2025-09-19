@@ -1,6 +1,7 @@
 package org.example.riskwarningsystembackend.config;
 
 import org.example.riskwarningsystembackend.security.JwtAuthenticationFilter;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -9,6 +10,7 @@ import org.springframework.security.config.annotation.method.configuration.Enabl
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+import org.springframework.security.config.annotation.web.configurers.HeadersConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -23,6 +25,9 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 @EnableWebSecurity
 @EnableMethodSecurity()
 public class SecurityConfig {
+
+    @Value("${security.iframe.allowed-ancestors}")
+    private String allowedIframeAncestors;
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
 
@@ -68,8 +73,15 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         // 禁用 CSRF 保护，适用于 RESTful API 场景
-        http
-                .csrf(AbstractHttpConfigurer::disable)
+        http.csrf(AbstractHttpConfigurer::disable)
+
+                // 配置HTTP响应头以解决iframe嵌入问题
+                .headers(headers -> headers
+                        // 禁用默认的 X-Frame-Options: DENY，改用下面的CSP策略
+                        .frameOptions(HeadersConfigurer.FrameOptionsConfig::disable)
+                        // 设置 Content-Security-Policy (CSP) 来控制嵌入
+                        .contentSecurityPolicy(csp -> csp.policyDirectives("frame-ancestors 'self' " + allowedIframeAncestors)))
+
                 // 设置会话管理策略为无状态，不创建或使用 HttpSession
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 // 配置请求授权规则
@@ -80,8 +92,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/**").authenticated()
                         // 3. 其他所有请求（非/api/开头的）全部放行。
                         //    这包括前端静态资源和所有前端路由。
-                        .anyRequest().permitAll()
-                );
+                        .anyRequest().permitAll());
 
         // 在用户名密码认证过滤器之前添加 JWT 认证过滤器
         http.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
