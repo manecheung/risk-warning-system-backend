@@ -71,7 +71,7 @@ public class MaterialPriceController {
     @GetMapping("/predict")
     public RestResult<List<PriceDataDto>> getPrediction(
             @RequestParam Long indicatorId,
-            @RequestParam(defaultValue = "30") int days) {
+            @RequestParam(defaultValue = "7") int days) {
         List<PriceDataDto> prediction = pricePredictionService.predictFuturePrices(indicatorId, days);
         return RestResult.success(prediction);
     }
