@@ -56,6 +56,9 @@ public class SmmApiService {
     @Value("${smm.api.password}")
     private String password;
 
+    @Value("${smm.api.sync.period}")
+    private int syncPeriod;
+
     private String token;
     private LocalDateTime tokenExpirationTime;
 
@@ -183,18 +186,18 @@ public class SmmApiService {
      */
     @Transactional
     public void syncRecentData() {
-        log.info("开始同步最近7天的日度SMM价格数据...");
+        log.info("开始同步最近{}天的日度SMM价格数据...", syncPeriod);
         List<SmmIndicator> dailyIndicators = indicatorRepository.findByFrequency(FREQUENCY_DAILY);
         LocalDate endDate = LocalDate.now();
-        LocalDate startDate = endDate.minusDays(7);
+        LocalDate startDate = endDate.minusDays(syncPeriod);
         for (SmmIndicator indicator : dailyIndicators) {
             try {
                 syncPriceDataForIndicator(indicator.getQuotaId(), startDate, endDate);
             } catch (Exception e) {
-                log.error("同步指标 {} 最近7天数据时出错: {}", indicator.getQuotaId(), e.getMessage(), e);
+                log.error("同步指标 {} 最近{}天数据时出错: {}", indicator.getQuotaId(), syncPeriod, e.getMessage(), e);
             }
         }
-        log.info("最近7天的日度SMM价格数据同步完成，共处理 {} 个日度指标。", dailyIndicators.size());
+        log.info("最近{}天的日度SMM价格数据同步完成，共处理 {} 个日度指标。", syncPeriod, dailyIndicators.size());
     }
 
     /**
